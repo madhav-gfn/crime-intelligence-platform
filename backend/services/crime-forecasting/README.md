@@ -79,6 +79,11 @@ clusters or a 2015 forecast.
 | `GET /api/forecasting/district/{district}` | TOTAL/VIOLENT/PROPERTY forecasts + backtest metrics for one district. |
 | `GET /api/forecasting/rankings?series=&order=&limit=` | Districts ranked by predicted 2015 % change from last observed year. |
 
+All endpoints require `Authorization: Bearer <token>` with at least the
+`ANALYST` role (see `backend/services/auth-service/README.md`) - this
+service is entirely district-level forecast data, no person/account
+identifiers anywhere. Tokens are verified statelessly via `app/rbac.py`.
+
 ## Setup
 
 ```bash

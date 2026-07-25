@@ -32,16 +32,22 @@ Docs at `http://127.0.0.1:8011/docs`.
 ./.venv/Scripts/python -m pytest tests/ -v
 ```
 
-## Endpoints
+## Endpoints (all require `Authorization: Bearer <token>` - see auth-service)
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/patterns/stats` | Dataset-wide summary (crime-type counts, date range, district count) |
-| `GET /api/patterns/hotspots` | DBSCAN geospatial clustering, filterable by crime type/district/date range, tunable `eps_km`/`min_points` |
-| `GET /api/patterns/district-severity` | PCA(2)+KMeans(3) tiering of districts into LOW/MEDIUM/HIGH severity on a 5-feature vector (volume, violent ratio, property ratio, unresolved ratio, crime-type diversity) |
-| `GET /api/patterns/trends/{granularity}` | `monthly`, `weekday`, or `hourly` incident counts, filterable by crime type/district |
-| `GET /api/patterns/emerging` | Flags (district, crime_type) pairs whose recent-window count is well above their baseline-implied rate - a lightweight early-warning signal |
-| `GET /api/patterns/similar-cases/{fir_id}` | Cosine-similarity MO matching against crime type + weapon + time-of-day, with `matching_features` listed per result for explainability |
+| Endpoint | Min. role | Purpose |
+|---|---|---|
+| `GET /api/patterns/stats` | `ANALYST` | Dataset-wide summary (crime-type counts, date range, district count) |
+| `GET /api/patterns/hotspots` | `ANALYST` | DBSCAN geospatial clustering, filterable by crime type/district/date range, tunable `eps_km`/`min_points` |
+| `GET /api/patterns/district-severity` | `ANALYST` | PCA(2)+KMeans(3) tiering of districts into LOW/MEDIUM/HIGH severity on a 5-feature vector (volume, violent ratio, property ratio, unresolved ratio, crime-type diversity) |
+| `GET /api/patterns/trends/{granularity}` | `ANALYST` | `monthly`, `weekday`, or `hourly` incident counts, filterable by crime type/district |
+| `GET /api/patterns/emerging` | `ANALYST` | Flags (district, crime_type) pairs whose recent-window count is well above their baseline-implied rate - a lightweight early-warning signal |
+| `GET /api/patterns/similar-cases/{fir_id}` | `ANALYST` | Cosine-similarity MO matching against crime type + weapon + time-of-day, with `matching_features` listed per result for explainability |
+
+Every endpoint here only requires the `ANALYST` floor (no `INVESTIGATOR`
+tier, unlike network-analysis/offender-profiling) - nothing in this
+service's output ever names a specific person, only geospatial clusters
+and district/case-level aggregates. Tokens are verified statelessly via
+`app/rbac.py` - see `backend/services/auth-service/README.md`.
 
 ## Two things worth knowing before trusting the output
 

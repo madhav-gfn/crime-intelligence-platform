@@ -32,18 +32,27 @@ Docs at `http://127.0.0.1:8010/docs`.
 ./.venv/Scripts/python -m pytest tests/ -v
 ```
 
-## Endpoints
+## Endpoints (all require `Authorization: Bearer <token>` - see auth-service)
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/network/stats` | Graph-wide summary (node/edge counts, community count, avg degree) |
-| `GET /api/network/graph` | Nodes+edges for visualization, filterable by district / min shared cases / node cap |
-| `GET /api/network/person/{id}` | Single person's profile + network degree |
-| `GET /api/network/person/{id}/ego` | A person's local network out to N hops - "who is this suspect connected to" |
-| `GET /api/network/communities` | Louvain-detected clusters - candidate organized-crime groups, each with a core member and shared crime types |
-| `GET /api/network/hubs` | Top actors by degree/betweenness centrality - "who are the key figures" |
-| `GET /api/network/path` | Shortest association path between two people, with the shared-FIR evidence for every hop (explainability) |
-| `GET /api/network/repeat-offenders` | Offenders sorted by prior case count |
+| Endpoint | Min. role | Purpose |
+|---|---|---|
+| `GET /api/network/stats` | `ANALYST` | Graph-wide summary (node/edge counts, community count, avg degree) |
+| `GET /api/network/graph` | `INVESTIGATOR` | Nodes+edges for visualization, filterable by district / min shared cases / node cap |
+| `GET /api/network/person/{id}` | `INVESTIGATOR` | Single person's profile + network degree |
+| `GET /api/network/person/{id}/ego` | `INVESTIGATOR` | A person's local network out to N hops - "who is this suspect connected to" |
+| `GET /api/network/communities` | `INVESTIGATOR` | Louvain-detected clusters - candidate organized-crime groups, each with a core member and shared crime types |
+| `GET /api/network/hubs` | `INVESTIGATOR` | Top actors by degree/betweenness centrality - "who are the key figures" |
+| `GET /api/network/path` | `INVESTIGATOR` | Shortest association path between two people, with the shared-FIR evidence for every hop (explainability) |
+| `GET /api/network/repeat-offenders` | `INVESTIGATOR` | Offenders sorted by prior case count |
+
+`/stats` is the only endpoint that doesn't name a specific person - every
+other endpoint returns `full_name`/`person_id` somewhere in its response,
+so all of them sit behind the `INVESTIGATOR` floor. Tokens are verified
+statelessly via `app/rbac.py` (same shared `JWT_SECRET` as auth-service,
+no callback per request) - see
+`backend/services/auth-service/README.md` for the full RBAC picture and
+`backend/services/offender-profiling/README.md` for the pattern this was
+copied from.
 
 Every edge in every response carries `fir_ids` - the specific cases the
 connection is based on - so any claim the API makes ("these two are linked")

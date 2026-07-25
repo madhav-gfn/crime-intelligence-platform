@@ -2,10 +2,10 @@
 
 Secure RBAC / governance (pillar 10). JWT-based login, three roles, and an
 audit log — the platform's first service with any access control at all.
-Before this, every one of the six analytics services had `allow_origins=["*"]`
+Before this, every one of the seven analytics services had `allow_origins=["*"]`
 and zero verification on any endpoint, which is a real gap for a platform
 that (even in demo form) serves individual-level predictive risk scores
-and case data.
+and case data. All seven now enforce it (see the table below).
 
 ## Roles
 
@@ -30,19 +30,33 @@ same `JWT_SECRET`/`JWT_ALGORITHM` and decodes the token itself. That's the
 standard JWT microservices pattern, and it's what actually keeps
 `auth-service` and every downstream service in sync — not shared code.
 
-`backend/services/offender-profiling/app/rbac.py` is the one, fully wired,
-tested example of this: `/model-info` requires `ANALYST` (i.e. any
-authenticated caller), `/person/{id}`, `/risk-list`, and `/predict`
-require `INVESTIGATOR`.
+Every service has its own `app/rbac.py` — a literal copy, not a shared
+import (each service is deployed/versioned independently with its own
+`requirements.txt`; see any `rbac.py`'s docstring for the same rationale
+`taxonomy.py`/`crime_type_profiles.py` already established elsewhere in
+this repo). What's shared is the `JWT_SECRET`/`JWT_ALGORITHM` env vars,
+not code.
 
-**The other five services (network-analysis, pattern-analytics,
-sociological-insights, financial-crime-analysis, crime-forecasting,
-investigator-decision-support) are not yet retrofitted.** Doing so is the
-same mechanical pattern — copy `rbac.py`, add the two JWT env vars to
-`config.py`, add `Depends(require_role(...))` to each router function —
-applied one more time per service. Said plainly here rather than silently
-implying full coverage: this build demonstrates the pattern working
-end-to-end on one real service, not "RBAC everywhere."
+Endpoints that name a specific person, account, or entity require
+`INVESTIGATOR`; endpoints that only ever return district/case-level
+aggregates stay at `ANALYST`. Per service:
+
+| Service | `INVESTIGATOR`-gated | `ANALYST`-only |
+|---|---|---|
+| `network-analysis` | `/graph`, `/person/{id}`, `/person/{id}/ego`, `/communities`, `/hubs`, `/path`, `/repeat-offenders` (all surface names) | `/stats` |
+| `offender-profiling` | `/person/{id}`, `/risk-list`, `/predict` | `/model-info` |
+| `financial-crime-analysis` | `/account/{id}`, `/suspicious-accounts`, `/patterns`, `/path` | `/stats`, `/evaluate` |
+| `investigator-decision-support` | `/person-dossier/{id}` | everything else |
+| `pattern-analytics` | none — no person-identifying output | all endpoints |
+| `sociological-insights` | none — district-level only | all endpoints |
+| `crime-forecasting` | none — district-level only | all endpoints |
+
+This was built incrementally: `offender-profiling` first, as a concrete
+end-to-end proof (real login, real token, real 401/403s verified against
+two live running services), then the same mechanical pattern applied to
+the remaining six — each retrofit came with its own new tests (401 with
+no token, 403 for an under-privileged role, 200 for the right one), not
+just code copied and assumed to work.
 
 ## Demo users
 

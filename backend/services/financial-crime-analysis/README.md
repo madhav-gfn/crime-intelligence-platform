@@ -117,16 +117,21 @@ in-memory-graph caveat pattern.
   labels ("Sole Proprietorship #41", "Partnership #35397"), not real
   institutions.
 
-## Endpoints
+## Endpoints (all require `Authorization: Bearer <token>` - see auth-service)
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/financial/stats` | Dataset totals, risk-tier counts, thresholds used. |
-| `GET /api/financial/account/{account_id}` | Full risk profile for one account. |
-| `GET /api/financial/suspicious-accounts?risk_tier=&limit=` | Accounts at a given risk tier, sorted by risk_score. |
-| `GET /api/financial/patterns?typology=&limit=` | Labeled laundering typology examples (370 total, 8 typologies). |
-| `GET /api/financial/path?source=&target=` | Shortest path between two accounts in the bounded suspicious-edge graph. |
-| `GET /api/financial/evaluate` | Rule-engine precision/recall/F1 against real ground truth. |
+| Endpoint | Min. role | Description |
+|---|---|---|
+| `GET /api/financial/stats` | `ANALYST` | Dataset totals, risk-tier counts, thresholds used. |
+| `GET /api/financial/account/{account_id}` | `INVESTIGATOR` | Full risk profile for one account. |
+| `GET /api/financial/suspicious-accounts?risk_tier=&limit=` | `INVESTIGATOR` | Accounts at a given risk tier, sorted by risk_score. |
+| `GET /api/financial/patterns?typology=&limit=` | `INVESTIGATOR` | Labeled laundering typology examples (370 total, 8 typologies) - names real-ish account/entity identifiers. |
+| `GET /api/financial/path?source=&target=` | `INVESTIGATOR` | Shortest path between two accounts in the bounded suspicious-edge graph. |
+| `GET /api/financial/evaluate` | `ANALYST` | Rule-engine precision/recall/F1 against real ground truth - dataset-wide aggregate, no account identifiers. |
+
+Account/entity identifiers are treated as this service's PII-equivalent -
+anything naming a specific account requires `INVESTIGATOR`; the two
+dataset-wide aggregate endpoints only need `ANALYST`. Tokens are verified
+statelessly via `app/rbac.py` - see `backend/services/auth-service/README.md`.
 
 ## Setup
 

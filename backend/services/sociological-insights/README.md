@@ -99,6 +99,11 @@ a causal direction. Present it that way in any demo.
 | `GET /api/sociology/rankings?sort_by=&order=&limit=&min_population=` | Districts ranked by any allowed indicator or crime metric. |
 | `GET /api/sociology/scatter/{indicator}?crime_metric=` | Raw (x, y) pairs for frontend scatter plots. |
 
+All endpoints require `Authorization: Bearer <token>` with at least the
+`ANALYST` role (see `backend/services/auth-service/README.md`) - this
+service is entirely district-level aggregate data, so nothing here needs
+the `INVESTIGATOR` tier. Tokens are verified statelessly via `app/rbac.py`.
+
 ## Setup
 
 ```bash

@@ -51,15 +51,18 @@ distribution first (265 HIGH / 638 MEDIUM / 922 LOW on the current build),
 not guessed blind. Every component is a visible field on the response, not
 folded into an opaque total.
 
-## Endpoints
+## Endpoints (all require `Authorization: Bearer <token>` - see auth-service)
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/decision-support/stats` | Unresolved-case counts, tier distribution, staleness threshold. |
-| `GET /api/decision-support/case-priority?priority_tier=&limit=` | Ranked unresolved cases with full score breakdown. |
-| `GET /api/decision-support/case/{fir_id}` | One case's priority breakdown. 404 distinguishes "doesn't exist" from "exists but is resolved, not in the queue." |
-| `GET /api/decision-support/person-dossier/{person_id}` | Cross-pillar profile: offender-profiling risk score, network-analysis co-accused associates + degree, full case history. |
-| `GET /api/decision-support/district-briefing/{district}` | Case volume/hotspot status + real Census socioeconomic context + real backtested crime forecast, joined in one place. |
+| Endpoint | Min. role | Description |
+|---|---|---|
+| `GET /api/decision-support/stats` | `ANALYST` | Unresolved-case counts, tier distribution, staleness threshold. |
+| `GET /api/decision-support/case-priority?priority_tier=&limit=` | `ANALYST` | Ranked unresolved cases with full score breakdown - no person names. |
+| `GET /api/decision-support/case/{fir_id}` | `ANALYST` | One case's priority breakdown. 404 distinguishes "doesn't exist" from "exists but is resolved, not in the queue." |
+| `GET /api/decision-support/person-dossier/{person_id}` | `INVESTIGATOR` | Cross-pillar profile: offender-profiling risk score, network-analysis co-accused associates + degree, full case history - the one endpoint here that names a specific person. |
+| `GET /api/decision-support/district-briefing/{district}` | `ANALYST` | Case volume/hotspot status + real Census socioeconomic context + real backtested crime forecast, joined in one place. |
+
+Tokens are verified statelessly via `app/rbac.py` - same shared secret as
+every other service, see `backend/services/auth-service/README.md`.
 
 ## Setup
 
