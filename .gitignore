@@ -71,6 +71,11 @@ data/processed/
 data/seed/*.csv
 
 # ==========================================================================
+# Confidential source documents - internal reference only, never pushed
+# ==========================================================================
+docs/architecture/Police_FIR_ER_Diagram.pdf
+
+# ==========================================================================
 # Infra (infra/terraform, infra/kubernetes, infra/docker)
 # ==========================================================================
 **/.terraform/

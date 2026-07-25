@@ -7,6 +7,19 @@ distribution, and accused-victim relationship mix. See
 for the calibration source and methodology, and `data/raw/MANIFEST.md` for
 dataset provenance.
 
+**Provenance as of this version:** these CSVs are no longer generated
+directly — they're the ETL output of a normalized OLTP database matching
+the real Karnataka Police Department FIR system schema
+(`docs/architecture/Police_FIR_ER_Diagram.pdf`). See
+`scripts/data_generation/oltp/README.md` for the pipeline, and in particular
+for the entity-resolution approach (repeat offenders are *reconstructed*
+from name/demographic similarity, since the real schema has no cross-case
+person identity) and a list of fields the real schema doesn't actually
+capture (`weapon_used`, `property_value_inr`, witness role) that are now
+consequently blank/absent here rather than fabricated. `fir_id` is now the
+real `CrimeNo` format (e.g. `103541451202000002`), not a `FIR-YYYY-NNNNNN`
+placeholder.
+
 ## `person.csv`
 One row per synthetic individual. A person can appear as ACCUSED in one FIR
 and WITNESS in another — role is per-link, not per-person (see
