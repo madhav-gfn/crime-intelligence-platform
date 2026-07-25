@@ -72,19 +72,38 @@ Top drivers, in order: `prior_case_count`, `days_since_first_case`
 history - a criminologically unsurprising, and reassuring, result (the
 model isn't leaning on demographic/geographic proxies).
 
-## Endpoints
+## Endpoints (all require a Bearer token - see Authentication below)
 
-| Endpoint | Description |
-|---|---|
-| `GET /api/offender-profiling/model-info` | Model comparison, feature importances, censoring stats, risk-tier thresholds. |
-| `GET /api/offender-profiling/person/{person_id}` | Precomputed risk profile for one accused person. |
-| `GET /api/offender-profiling/risk-list?risk_tier=&limit=` | Persons at a given risk tier, sorted by predicted probability. |
-| `GET /api/offender-profiling/predict?...` | Live inference against the trained model for a hypothetical profile - not a lookup. |
+| Endpoint | Min. role | Description |
+|---|---|---|
+| `GET /api/offender-profiling/model-info` | `ANALYST` | Model comparison, feature importances, censoring stats, risk-tier thresholds. |
+| `GET /api/offender-profiling/person/{person_id}` | `INVESTIGATOR` | Precomputed risk profile for one accused person. |
+| `GET /api/offender-profiling/risk-list?risk_tier=&limit=` | `INVESTIGATOR` | Persons at a given risk tier, sorted by predicted probability. |
+| `GET /api/offender-profiling/predict?...` | `INVESTIGATOR` | Live inference against the trained model for a hypothetical profile - not a lookup. |
 
 `/predict` is the one endpoint that actually runs the pickled sklearn
 model at request time (all others serve the precomputed
 `person_risk_scores.csv`) - useful for a "what if this new arrest had N
 priors" investigator query.
+
+## Authentication (pillar 10)
+
+This is the one service in this platform currently wired into
+`auth-service`'s JWT-based RBAC (see
+`backend/services/auth-service/README.md` for the full picture and why
+the other five services aren't retrofitted yet). Every endpoint requires
+`Authorization: Bearer <token>`; person/case-level endpoints require at
+least `INVESTIGATOR`, aggregate model info only requires `ANALYST`.
+
+`app/rbac.py` verifies tokens statelessly using the same `JWT_SECRET` /
+`JWT_ALGORITHM` env vars `auth-service` issues them with - no callback to
+auth-service per request. Get a token:
+
+```bash
+curl -X POST http://localhost:8020/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "pi_sharma", "password": "<from build_demo_users.py output>"}'
+```
 
 ## Setup
 
