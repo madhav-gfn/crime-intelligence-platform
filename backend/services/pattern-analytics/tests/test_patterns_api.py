@@ -1,8 +1,23 @@
+from datetime import datetime, timedelta, timezone
+
+import jwt
 import pytest
 from fastapi.testclient import TestClient
 
 from app.analytics_store import store
+from app.config import settings
 from app.main import app
+
+
+def _make_token(role: str, username: str = "test_user") -> str:
+    payload = {
+        "sub": username, "role": role, "full_name": username,
+        "iat": datetime.now(timezone.utc), "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+ANALYST_HEADERS = {"Authorization": f"Bearer {_make_token('ANALYST')}"}
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -23,8 +38,13 @@ def test_health(client):
     assert r.json()["firs_loaded"] == 5000
 
 
-def test_stats(client):
+def test_stats_requires_auth(client):
     r = client.get("/api/patterns/stats")
+    assert r.status_code in (401, 403)
+
+
+def test_stats(client):
+    r = client.get("/api/patterns/stats", headers=ANALYST_HEADERS)
     assert r.status_code == 200
     body = r.json()
     assert body["total_firs"] == 5000
@@ -33,7 +53,10 @@ def test_stats(client):
 
 
 def test_hotspots_default(client):
-    r = client.get("/api/patterns/hotspots", params={"crime_type": "THEFT", "eps_km": 15, "min_points": 4})
+    r = client.get(
+        "/api/patterns/hotspots", params={"crime_type": "THEFT", "eps_km": 15, "min_points": 4},
+        headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 200
     body = r.json()
     assert body["total_points_considered"] > 0
@@ -47,13 +70,15 @@ def test_hotspots_default(client):
 
 
 def test_hotspots_empty_when_too_few_points(client):
-    r = client.get("/api/patterns/hotspots", params={"crime_type": "DACOITY", "min_points": 500})
+    r = client.get(
+        "/api/patterns/hotspots", params={"crime_type": "DACOITY", "min_points": 500}, headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 200
     assert r.json()["clusters"] == []
 
 
 def test_district_severity(client):
-    r = client.get("/api/patterns/district-severity", params={"min_crimes": 10})
+    r = client.get("/api/patterns/district-severity", params={"min_crimes": 10}, headers=ANALYST_HEADERS)
     assert r.status_code == 200
     body = r.json()
     assert body["districts_included"] > 0
@@ -68,7 +93,7 @@ def test_district_severity(client):
 
 @pytest.mark.parametrize("granularity,expected_buckets", [("weekday", 7), ("hourly", 24)])
 def test_trends_fixed_bucket_counts(client, granularity, expected_buckets):
-    r = client.get(f"/api/patterns/trends/{granularity}")
+    r = client.get(f"/api/patterns/trends/{granularity}", headers=ANALYST_HEADERS)
     assert r.status_code == 200
     body = r.json()
     assert len(body["points"]) == expected_buckets
@@ -76,7 +101,7 @@ def test_trends_fixed_bucket_counts(client, granularity, expected_buckets):
 
 
 def test_trends_monthly_covers_full_range(client):
-    r = client.get("/api/patterns/trends/monthly")
+    r = client.get("/api/patterns/trends/monthly", headers=ANALYST_HEADERS)
     assert r.status_code == 200
     points = r.json()["points"]
     assert points[0]["bucket"] == "2020-01"
@@ -84,20 +109,25 @@ def test_trends_monthly_covers_full_range(client):
 
 
 def test_trends_invalid_granularity_400(client):
-    r = client.get("/api/patterns/trends/yearly")
+    r = client.get("/api/patterns/trends/yearly", headers=ANALYST_HEADERS)
     assert r.status_code == 400
 
 
 def test_trends_filter_by_crime_type_reduces_count(client):
-    r_all = client.get("/api/patterns/trends/weekday")
-    r_theft = client.get("/api/patterns/trends/weekday", params={"crime_type": "THEFT"})
+    r_all = client.get("/api/patterns/trends/weekday", headers=ANALYST_HEADERS)
+    r_theft = client.get(
+        "/api/patterns/trends/weekday", params={"crime_type": "THEFT"}, headers=ANALYST_HEADERS,
+    )
     total_all = sum(p["count"] for p in r_all.json()["points"])
     total_theft = sum(p["count"] for p in r_theft.json()["points"])
     assert 0 < total_theft < total_all
 
 
 def test_emerging(client):
-    r = client.get("/api/patterns/emerging", params={"recent_days": 180, "baseline_days": 365, "min_recent_count": 3})
+    r = client.get(
+        "/api/patterns/emerging", params={"recent_days": 180, "baseline_days": 365, "min_recent_count": 3},
+        headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 200
     body = r.json()
     for alert in body["alerts"]:
@@ -108,7 +138,9 @@ def test_emerging(client):
 
 def test_similar_cases(client, loaded_store):
     sample_fir_id = loaded_store.df.iloc[0]["fir_id"]
-    r = client.get(f"/api/patterns/similar-cases/{sample_fir_id}", params={"top_n": 5})
+    r = client.get(
+        f"/api/patterns/similar-cases/{sample_fir_id}", params={"top_n": 5}, headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 200
     body = r.json()
     assert body["source_fir_id"] == sample_fir_id
@@ -121,5 +153,5 @@ def test_similar_cases(client, loaded_store):
 
 
 def test_similar_cases_404(client):
-    r = client.get("/api/patterns/similar-cases/NOT-A-REAL-FIR")
+    r = client.get("/api/patterns/similar-cases/NOT-A-REAL-FIR", headers=ANALYST_HEADERS)
     assert r.status_code == 404

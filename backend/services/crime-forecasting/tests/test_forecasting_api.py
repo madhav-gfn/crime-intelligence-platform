@@ -1,8 +1,23 @@
+from datetime import datetime, timedelta, timezone
+
+import jwt
 import pytest
 from fastapi.testclient import TestClient
 
 from app.analytics_store import store
+from app.config import settings
 from app.main import app
+
+
+def _make_token(role: str, username: str = "test_user") -> str:
+    payload = {
+        "sub": username, "role": role, "full_name": username,
+        "iat": datetime.now(timezone.utc), "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+ANALYST_HEADERS = {"Authorization": f"Bearer {_make_token('ANALYST')}"}
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -23,8 +38,13 @@ def test_health(client):
     assert r.json()["series_loaded"] == 1914
 
 
-def test_stats(client):
+def test_stats_requires_auth(client):
     r = client.get("/api/forecasting/stats")
+    assert r.status_code in (401, 403)
+
+
+def test_stats(client):
+    r = client.get("/api/forecasting/stats", headers=ANALYST_HEADERS)
     assert r.status_code == 200
     body = r.json()
     assert body["total_ncrb_districts"] == 827
@@ -37,7 +57,7 @@ def test_stats(client):
 
 
 def test_district_forecast_found(client):
-    r = client.get("/api/forecasting/district/CHENNAI")
+    r = client.get("/api/forecasting/district/CHENNAI", headers=ANALYST_HEADERS)
     assert r.status_code == 200
     body = r.json()
     assert body["district"] == "CHENNAI"
@@ -51,18 +71,21 @@ def test_district_forecast_found(client):
 
 
 def test_district_forecast_not_found(client):
-    r = client.get("/api/forecasting/district/NOT_A_REAL_DISTRICT_XYZ")
+    r = client.get("/api/forecasting/district/NOT_A_REAL_DISTRICT_XYZ", headers=ANALYST_HEADERS)
     assert r.status_code == 404
 
 
 def test_district_forecast_substring_fallback(client):
-    r = client.get("/api/forecasting/district/bangalore")
+    r = client.get("/api/forecasting/district/bangalore", headers=ANALYST_HEADERS)
     assert r.status_code == 200
     assert "BANGALORE" in r.json()["district"]
 
 
 def test_rankings_desc(client):
-    r = client.get("/api/forecasting/rankings", params={"series": "TOTAL", "order": "desc", "limit": 10})
+    r = client.get(
+        "/api/forecasting/rankings", params={"series": "TOTAL", "order": "desc", "limit": 10},
+        headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 200
     body = r.json()
     assert len(body["districts"]) == 10
@@ -71,19 +94,24 @@ def test_rankings_desc(client):
 
 
 def test_rankings_asc(client):
-    r = client.get("/api/forecasting/rankings", params={"series": "VIOLENT", "order": "asc", "limit": 5})
+    r = client.get(
+        "/api/forecasting/rankings", params={"series": "VIOLENT", "order": "asc", "limit": 5},
+        headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 200
     changes = [d["pct_change"] for d in r.json()["districts"]]
     assert changes == sorted(changes)
 
 
 def test_rankings_invalid_series(client):
-    r = client.get("/api/forecasting/rankings", params={"series": "NOT_A_SERIES"})
+    r = client.get(
+        "/api/forecasting/rankings", params={"series": "NOT_A_SERIES"}, headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 422
 
 
 def test_all_series_have_full_backtest_history(client):
-    r = client.get("/api/forecasting/district/DELHI")
+    r = client.get("/api/forecasting/district/DELHI", headers=ANALYST_HEADERS)
     body = r.json()
     for s in body["series"]:
         assert s["last_observed_year"] == 2012

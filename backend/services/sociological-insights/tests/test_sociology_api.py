@@ -1,8 +1,23 @@
+from datetime import datetime, timedelta, timezone
+
+import jwt
 import pytest
 from fastapi.testclient import TestClient
 
 from app.analytics_store import ALLOWED_INDICATORS, CRIME_METRICS, DEMOGRAPHIC_CONTEXT_ONLY, store
+from app.config import settings
 from app.main import app
+
+
+def _make_token(role: str, username: str = "test_user") -> str:
+    payload = {
+        "sub": username, "role": role, "full_name": username,
+        "iat": datetime.now(timezone.utc), "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
+    }
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+ANALYST_HEADERS = {"Authorization": f"Bearer {_make_token('ANALYST')}"}
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -23,8 +38,13 @@ def test_health(client):
     assert r.json()["districts_loaded"] > 0
 
 
-def test_districts_list(client):
+def test_districts_requires_auth(client):
     r = client.get("/api/sociology/districts")
+    assert r.status_code in (401, 403)
+
+
+def test_districts_list(client):
+    r = client.get("/api/sociology/districts", headers=ANALYST_HEADERS)
     assert r.status_code == 200
     body = r.json()
     assert body["matched_districts"] > 0
@@ -37,9 +57,9 @@ def test_districts_list(client):
 
 
 def test_district_profile_found(client):
-    listing = client.get("/api/sociology/districts").json()
+    listing = client.get("/api/sociology/districts", headers=ANALYST_HEADERS).json()
     sample = listing["districts"][0]["district"]
-    r = client.get(f"/api/sociology/district/{sample}")
+    r = client.get(f"/api/sociology/district/{sample}", headers=ANALYST_HEADERS)
     assert r.status_code == 200
     body = r.json()
     assert body["district"].lower() == sample.lower() or sample.lower() in body["district"].lower()
@@ -50,12 +70,12 @@ def test_district_profile_found(client):
 
 
 def test_district_profile_not_found(client):
-    r = client.get("/api/sociology/district/ZZZ_NOT_A_REAL_DISTRICT")
+    r = client.get("/api/sociology/district/ZZZ_NOT_A_REAL_DISTRICT", headers=ANALYST_HEADERS)
     assert r.status_code == 404
 
 
 def test_correlations_excludes_demographic_fields(client):
-    r = client.get("/api/sociology/correlations")
+    r = client.get("/api/sociology/correlations", headers=ANALYST_HEADERS)
     assert r.status_code == 200
     body = r.json()
     assert body["indicators_used"] == ALLOWED_INDICATORS
@@ -70,14 +90,19 @@ def test_correlations_excludes_demographic_fields(client):
 
 
 def test_correlations_min_population_filter(client):
-    r_all = client.get("/api/sociology/correlations")
-    r_filtered = client.get("/api/sociology/correlations", params={"min_population": 2_000_000})
+    r_all = client.get("/api/sociology/correlations", headers=ANALYST_HEADERS)
+    r_filtered = client.get(
+        "/api/sociology/correlations", params={"min_population": 2_000_000}, headers=ANALYST_HEADERS,
+    )
     assert r_filtered.status_code == 200
     assert r_filtered.json()["districts_included"] < r_all.json()["districts_included"]
 
 
 def test_rankings_valid_field(client):
-    r = client.get("/api/sociology/rankings", params={"sort_by": "literacy_rate", "order": "desc", "limit": 5})
+    r = client.get(
+        "/api/sociology/rankings", params={"sort_by": "literacy_rate", "order": "desc", "limit": 5},
+        headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 200
     body = r.json()
     assert len(body["districts"]) == 5
@@ -86,24 +111,30 @@ def test_rankings_valid_field(client):
 
 
 def test_rankings_ascending(client):
-    r = client.get("/api/sociology/rankings", params={"sort_by": "crime_rate_per_100k", "order": "asc", "limit": 5})
+    r = client.get(
+        "/api/sociology/rankings", params={"sort_by": "crime_rate_per_100k", "order": "asc", "limit": 5},
+        headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 200
     values = [d["value"] for d in r.json()["districts"]]
     assert values == sorted(values)
 
 
 def test_rankings_rejects_demographic_field(client):
-    r = client.get("/api/sociology/rankings", params={"sort_by": "sc_st_share"})
+    r = client.get("/api/sociology/rankings", params={"sort_by": "sc_st_share"}, headers=ANALYST_HEADERS)
     assert r.status_code == 400
 
 
 def test_rankings_rejects_unknown_field(client):
-    r = client.get("/api/sociology/rankings", params={"sort_by": "not_a_real_column"})
+    r = client.get("/api/sociology/rankings", params={"sort_by": "not_a_real_column"}, headers=ANALYST_HEADERS)
     assert r.status_code == 400
 
 
 def test_scatter_valid(client):
-    r = client.get("/api/sociology/scatter/literacy_rate", params={"crime_metric": "crime_rate_per_100k"})
+    r = client.get(
+        "/api/sociology/scatter/literacy_rate", params={"crime_metric": "crime_rate_per_100k"},
+        headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 200
     body = r.json()
     assert body["indicator"] == "literacy_rate"
@@ -111,10 +142,12 @@ def test_scatter_valid(client):
 
 
 def test_scatter_rejects_demographic_indicator(client):
-    r = client.get("/api/sociology/scatter/muslim_share")
+    r = client.get("/api/sociology/scatter/muslim_share", headers=ANALYST_HEADERS)
     assert r.status_code == 400
 
 
 def test_scatter_rejects_bad_crime_metric(client):
-    r = client.get("/api/sociology/scatter/literacy_rate", params={"crime_metric": "not_a_metric"})
+    r = client.get(
+        "/api/sociology/scatter/literacy_rate", params={"crime_metric": "not_a_metric"}, headers=ANALYST_HEADERS,
+    )
     assert r.status_code == 400
