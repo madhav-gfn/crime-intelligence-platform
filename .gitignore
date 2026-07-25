@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Data - raw/processed can be multi-GB and are reproducible via scripts/data_generation/
+# and data/raw/MANIFEST.md; seed output is regenerable via generate_synthetic_fir_data.py
+data/raw/
+data/processed/
+data/seed/*.csv
+
+# Secrets / local config
+.env
+.env.*
+*.local
+kaggle.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
