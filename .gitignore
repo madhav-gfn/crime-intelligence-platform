@@ -1,30 +1,121 @@
-# Python
+# ==========================================================================
+# Python (backend/services/*, ml-pipeline/, scripts/, nlp-models/)
+# ==========================================================================
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 .venv/
 venv/
+env/
+ENV/
 *.egg-info/
+.eggs/
+.installed.cfg
+*.egg
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
 
-# Node
+# Jupyter (ml-pipeline notebooks, exploratory analysis)
+.ipynb_checkpoints/
+
+# ==========================================================================
+# Node / frontend (frontend/web-app/)
+# ==========================================================================
 node_modules/
+.pnp/
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 dist/
 build/
+.next/
+.nuxt/
+.cache/
+coverage/
+*.tsbuildinfo
 
-# Data - raw/processed can be multi-GB and are reproducible via scripts/data_generation/
-# and data/raw/MANIFEST.md; seed output is regenerable via generate_synthetic_fir_data.py
+# ==========================================================================
+# ML / NLP model artifacts - trained on Kaggle, pulled in as versioned
+# artifacts, not committed to git (see data/raw/MANIFEST.md for the
+# equivalent policy on raw datasets)
+# ==========================================================================
+*.pkl
+*.pt
+*.pth
+*.h5
+*.hdf5
+*.onnx
+*.safetensors
+*.ckpt
+*.bin
+mlruns/
+wandb/
+
+# ==========================================================================
+# Data - raw/processed/seed are multi-GB and fully reproducible via
+# scripts/data_generation/ + data/raw/MANIFEST.md (provenance) - never commit
+# the data itself, only the generation code and schema docs.
+# ==========================================================================
 data/raw/
 data/processed/
 data/seed/*.csv
 
-# Secrets / local config
+# ==========================================================================
+# Infra (infra/terraform, infra/kubernetes, infra/docker)
+# ==========================================================================
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraformrc
+terraform.rc
+crash.log
+kubeconfig
+*.kubeconfig
+
+# Zoho Catalyst - .catalystrc holds a local portal/project mapping,
+# machine-specific, not meant to be shared (see docs/architecture/Zoho
+# Catalyst Deployment Architecture and Configuration.md)
+.catalystrc
+
+# ==========================================================================
+# Secrets / local config - never commit credentials of any kind
+# ==========================================================================
 .env
 .env.*
+!.env.example
 *.local
 kaggle.json
+*.pem
+*.key
+credentials.json
+service-account*.json
 
+# ==========================================================================
+# Logs
+# ==========================================================================
+*.log
+logs/
+
+# ==========================================================================
 # OS / editor
+# ==========================================================================
 .DS_Store
 Thumbs.db
+desktop.ini
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
