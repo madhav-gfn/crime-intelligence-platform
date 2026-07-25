@@ -50,6 +50,7 @@ aggregates stay at `ANALYST`. Per service:
 | `pattern-analytics` | none — no person-identifying output | all endpoints |
 | `sociological-insights` | none — district-level only | all endpoints |
 | `crime-forecasting` | none — district-level only | all endpoints |
+| `explainable-ai` | `/person/{id}` (real person's SHAP explanation) | `/methodology`, `/model-info`, `/predict-explain` (hypothetical profile) |
 
 This was built incrementally: `offender-profiling` first, as a concrete
 end-to-end proof (real login, real token, real 401/403s verified against

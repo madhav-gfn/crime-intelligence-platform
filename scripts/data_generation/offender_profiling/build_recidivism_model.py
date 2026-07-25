@@ -260,6 +260,15 @@ def main():
     risk_tier_thresholds = {"p65_medium_cutoff": round(float(p65), 4), "p90_high_cutoff": round(float(p90), 4)}
 
     person_scores.to_csv(OUT_DIR / "person_risk_scores.csv", index=False)
+
+    # Persist the exact feature matrix used for current_proba above (not
+    # just the resulting scores) - explainable-ai (pillar 9) needs this to
+    # compute SHAP values against precisely what was actually predicted,
+    # rather than re-deriving features a second time and risking drift.
+    feature_vectors = X_current.copy()
+    feature_vectors.insert(0, "person_id", latest_per_person["person_id"].values)
+    feature_vectors.to_csv(OUT_DIR / "person_feature_vectors.csv", index=False)
+
     with (OUT_DIR / "model.pkl").open("wb") as f:
         pickle.dump(selected_model, f)
 

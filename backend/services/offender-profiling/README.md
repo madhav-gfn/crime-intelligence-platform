@@ -88,10 +88,10 @@ priors" investigator query.
 
 ## Authentication (pillar 10)
 
-This is the one service in this platform currently wired into
-`auth-service`'s JWT-based RBAC (see
-`backend/services/auth-service/README.md` for the full picture and why
-the other five services aren't retrofitted yet). Every endpoint requires
+This was the first service wired into `auth-service`'s JWT-based RBAC, as
+a concrete end-to-end proof before the same pattern was retrofitted into
+every other service (see `backend/services/auth-service/README.md` for
+the full per-service breakdown). Every endpoint requires
 `Authorization: Bearer <token>`; person/case-level endpoints require at
 least `INVESTIGATOR`, aggregate model info only requires `ANALYST`.
 
