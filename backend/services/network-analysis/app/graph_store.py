@@ -31,8 +31,11 @@ class GraphStore:
     def load(self):
         d = self.data_dir
         self.person_df = pd.read_csv(d / "person.csv").set_index("person_id", drop=False)
-        self.fir_df = pd.read_csv(d / "fir.csv").set_index("fir_id", drop=False)
-        self.link_df = pd.read_csv(d / "fir_person_link.csv")
+        # fir_id (real FIR CrimeNo, e.g. "103541451202000002") is all-digit and
+        # pandas otherwise silently infers it as int64 - force str so lookups
+        # against string fir_ids elsewhere (e.g. network_edge.csv) actually match.
+        self.fir_df = pd.read_csv(d / "fir.csv", dtype={"fir_id": str}).set_index("fir_id", drop=False)
+        self.link_df = pd.read_csv(d / "fir_person_link.csv", dtype={"fir_id": str})
         self.edge_df = pd.read_csv(d / "network_edge.csv")
         self.offender_df = pd.read_csv(d / "offender_profile.csv").set_index("person_id", drop=False)
 

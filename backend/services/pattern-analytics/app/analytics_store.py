@@ -53,7 +53,10 @@ class AnalyticsStore:
         self.df: pd.DataFrame | None = None
 
     def load(self):
-        self.df = pd.read_csv(self.data_dir / "fir.csv")
+        # fir_id (real FIR CrimeNo, e.g. "103541451202000002") is all-digit and
+        # pandas otherwise silently infers it as int64 - force str so it round-trips
+        # correctly through Pydantic response models and dict lookups.
+        self.df = pd.read_csv(self.data_dir / "fir.csv", dtype={"fir_id": str})
         self.df["date_occurred"] = pd.to_datetime(self.df["date_occurred"])
         self.df["hour"] = self.df["time_occurred"].str.split(":").str[0].astype(int)
         self.df["weekday"] = self.df["date_occurred"].dt.day_name()
