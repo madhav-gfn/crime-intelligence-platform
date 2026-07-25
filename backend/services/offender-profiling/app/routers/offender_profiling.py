@@ -1,18 +1,19 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.analytics_store import store
+from app.rbac import require_role
 from app.schemas import ModelInfo, PersonRiskProfile, PredictResponse, RiskListResponse
 
 router = APIRouter(prefix="/api/offender-profiling", tags=["offender-profiling"])
 
 
 @router.get("/model-info", response_model=ModelInfo)
-def get_model_info():
+def get_model_info(claims: dict = Depends(require_role("ANALYST"))):
     return store.model_info()
 
 
 @router.get("/person/{person_id}", response_model=PersonRiskProfile)
-def get_person(person_id: str):
+def get_person(person_id: str, claims: dict = Depends(require_role("INVESTIGATOR"))):
     result = store.person_profile(person_id)
     if result is None:
         raise HTTPException(status_code=404, detail=f"person_id '{person_id}' not found")
@@ -23,6 +24,7 @@ def get_person(person_id: str):
 def get_risk_list(
     risk_tier: str = Query("HIGH", pattern="^(LOW|MEDIUM|HIGH)$"),
     limit: int = Query(100, ge=1, le=1000),
+    claims: dict = Depends(require_role("INVESTIGATOR")),
 ):
     return store.risk_list(risk_tier=risk_tier, limit=limit)
 
@@ -39,6 +41,7 @@ def predict(
     gender: str = Query("M", pattern="^(M|F)$"),
     age: int = Query(..., ge=0, le=120),
     state: str = Query("OTHER"),
+    claims: dict = Depends(require_role("INVESTIGATOR")),
 ):
     return store.predict(
         prior_case_count, distinct_prior_crime_types, prior_violent_count, prior_property_count,
