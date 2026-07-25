@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.analytics_store import ALLOWED_INDICATORS, CRIME_METRICS, store
+from app.rbac import require_role
 from app.schemas import (
     CorrelationsResponse, DistrictListResponse, DistrictProfile, RankingResponse, ScatterResponse,
 )
@@ -11,12 +12,12 @@ _SORTABLE_FIELDS = set(ALLOWED_INDICATORS) | set(CRIME_METRICS)
 
 
 @router.get("/districts", response_model=DistrictListResponse)
-def get_districts():
+def get_districts(claims: dict = Depends(require_role("ANALYST"))):
     return store.districts()
 
 
 @router.get("/district/{district}", response_model=DistrictProfile)
-def get_district_profile(district: str):
+def get_district_profile(district: str, claims: dict = Depends(require_role("ANALYST"))):
     result = store.district_profile(district)
     if result is None:
         raise HTTPException(status_code=404, detail=f"district '{district}' not found in the joined dataset")
@@ -26,6 +27,7 @@ def get_district_profile(district: str):
 @router.get("/correlations", response_model=CorrelationsResponse)
 def get_correlations(
     min_population: int = Query(0, ge=0, description="Exclude districts below this population from the correlation"),
+    claims: dict = Depends(require_role("ANALYST")),
 ):
     return store.correlations(min_population=min_population)
 
@@ -36,6 +38,7 @@ def get_rankings(
     order: str = Query("desc", pattern="^(asc|desc)$"),
     limit: int = Query(20, ge=1, le=200),
     min_population: int = Query(0, ge=0),
+    claims: dict = Depends(require_role("ANALYST")),
 ):
     if sort_by not in _SORTABLE_FIELDS:
         raise HTTPException(status_code=400, detail=f"sort_by must be one of: {sorted(_SORTABLE_FIELDS)}")
@@ -46,6 +49,7 @@ def get_rankings(
 def get_scatter(
     indicator: str,
     crime_metric: str = Query("crime_rate_per_100k"),
+    claims: dict = Depends(require_role("ANALYST")),
 ):
     if indicator not in ALLOWED_INDICATORS:
         raise HTTPException(status_code=400, detail=f"indicator must be one of: {ALLOWED_INDICATORS}")

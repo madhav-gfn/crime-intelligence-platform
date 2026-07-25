@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.analytics_store import store
+from app.rbac import require_role
 from app.schemas import (
     DatasetStats, DistrictSeverityResponse, EmergingResponse, HotspotResponse,
     SimilarCasesResponse, TrendResponse,
@@ -10,7 +11,7 @@ router = APIRouter(prefix="/api/patterns", tags=["pattern-analytics"])
 
 
 @router.get("/stats", response_model=DatasetStats)
-def get_stats():
+def get_stats(claims: dict = Depends(require_role("ANALYST"))):
     return store.stats()
 
 
@@ -22,6 +23,7 @@ def get_hotspots(
     end_date: str | None = Query(None, description="YYYY-MM-DD"),
     eps_km: float = Query(15.0, gt=0, description="DBSCAN neighborhood radius in km"),
     min_points: int = Query(5, ge=2, description="DBSCAN min_samples - minimum incidents to form a cluster core"),
+    claims: dict = Depends(require_role("ANALYST")),
 ):
     return store.hotspots(crime_type, district, start_date, end_date, eps_km, min_points)
 
@@ -29,6 +31,7 @@ def get_hotspots(
 @router.get("/district-severity", response_model=DistrictSeverityResponse)
 def get_district_severity(
     min_crimes: int = Query(10, ge=1, description="Exclude districts with fewer than this many recorded crimes"),
+    claims: dict = Depends(require_role("ANALYST")),
 ):
     return store.district_severity(min_crimes=min_crimes)
 
@@ -38,6 +41,7 @@ def get_trends(
     granularity: str,
     crime_type: str | None = Query(None),
     district: str | None = Query(None),
+    claims: dict = Depends(require_role("ANALYST")),
 ):
     if granularity not in {"monthly", "weekday", "hourly"}:
         raise HTTPException(status_code=400, detail="granularity must be one of: monthly, weekday, hourly")
@@ -54,12 +58,15 @@ def get_emerging(
                      "~660 districts x 21 crime types over 5 years, so per-cell counts are naturally sparse. "
                      "Raise this once running against denser, real case volume.",
     ),
+    claims: dict = Depends(require_role("ANALYST")),
 ):
     return store.emerging(recent_days, baseline_days, min_recent_count)
 
 
 @router.get("/similar-cases/{fir_id}", response_model=SimilarCasesResponse)
-def get_similar_cases(fir_id: str, top_n: int = Query(10, ge=1, le=50)):
+def get_similar_cases(
+    fir_id: str, top_n: int = Query(10, ge=1, le=50), claims: dict = Depends(require_role("ANALYST")),
+):
     result = store.similar_cases(fir_id, top_n)
     if result is None:
         raise HTTPException(status_code=404, detail=f"fir_id '{fir_id}' not found")
