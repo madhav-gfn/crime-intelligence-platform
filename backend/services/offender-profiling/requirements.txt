@@ -2,7 +2,9 @@ fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
 pandas>=2.2.0
 numpy>=1.26.0
-scikit-learn>=1.5.0
+scikit-learn==1.7.1  # pinned exactly - model.pkl was trained with this version; unpickling
+                     # across sklearn versions is unreliable (see build_recidivism_model.py) -
+                     # bump this deliberately alongside a model retrain, not as a routine upgrade
 pydantic-settings>=2.4.0
 pyjwt>=2.9.0
 pytest>=8.0.0

@@ -9,7 +9,7 @@ _DATA_DIR = _REPO_ROOT / "data" / "processed" / "financial-crime"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="")
+    model_config = SettingsConfigDict(env_prefix="", env_file=".env", env_file_encoding="utf-8")
 
     # Overridable via *_PATH env vars, same convention as the other services.
     account_features_path: Path = _DATA_DIR / "account_features.csv"

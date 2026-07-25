@@ -7,7 +7,7 @@ _REPO_ROOT = _SERVICE_DIR.parents[2]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="")
+    model_config = SettingsConfigDict(env_prefix="", env_file=".env", env_file_encoding="utf-8")
 
     # Overridable via *_PATH / *_DIR env vars, same convention as the other services.
     data_seed_dir: Path = _REPO_ROOT / "data" / "seed"

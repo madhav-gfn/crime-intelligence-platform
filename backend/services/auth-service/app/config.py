@@ -17,7 +17,7 @@ _INSECURE_DEV_DEFAULT_SECRET = "dev-only-insecure-secret-change-me-via-JWT_SECRE
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="")
+    model_config = SettingsConfigDict(env_prefix="", env_file=".env", env_file_encoding="utf-8")
 
     users_path: Path = _REPO_ROOT / "data" / "processed" / "auth" / "users.json"
     jwt_secret: str = _INSECURE_DEV_DEFAULT_SECRET

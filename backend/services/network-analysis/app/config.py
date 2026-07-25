@@ -7,7 +7,7 @@ _REPO_ROOT = _SERVICE_DIR.parents[2]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="")
+    model_config = SettingsConfigDict(env_prefix="", env_file=".env", env_file_encoding="utf-8")
 
     # Overridable via DATA_SEED_DIR env var - default assumes local monorepo
     # layout (backend/services/network-analysis -> ../../../data/seed).
