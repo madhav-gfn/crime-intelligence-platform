@@ -1,0 +1,16 @@
+{
+  "command": "python3 -m uvicorn app.main:app --host 0.0.0.0 --port $X_ZOHO_CATALYST_LISTEN_PORT",
+  "buildPath": "./",
+  "stack": "python3.13",
+  "memory": 512,
+  "env_variables": {
+    "DATA_SEED_DIR": "./data/seed",
+    "NETWORK_ANALYSIS_URL": "REPLACE_ME_after_deploying_network-analysis",
+    "PATTERN_ANALYTICS_URL": "REPLACE_ME_after_deploying_pattern-analytics",
+    "FINANCIAL_CRIME_ANALYSIS_URL": "REPLACE_ME_after_deploying_financial-crime-analysis",
+    "CRIME_FORECASTING_URL": "REPLACE_ME_after_deploying_crime-forecasting",
+    "OFFENDER_PROFILING_URL": "REPLACE_ME_after_deploying_offender-profiling",
+    "INVESTIGATOR_DECISION_SUPPORT_URL": "REPLACE_ME_after_deploying_investigator-decision-support",
+    "EXPLAINABLE_AI_URL": "REPLACE_ME_after_deploying_explainable-ai"
+  }
+}

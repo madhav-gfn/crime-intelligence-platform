@@ -145,3 +145,8 @@ python -m uvicorn app.main:app --reload --port 8013
 ```bash
 python -m pytest tests/ -v
 ```
+
+## Deployment
+
+See [docs/deployment/DEPLOY.md](../../../docs/deployment/DEPLOY.md) for the
+Zoho Catalyst AppSail deploy guide (backend-only, no frontend yet).

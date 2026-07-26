@@ -70,6 +70,11 @@ data/raw/
 data/processed/
 data/seed/*.csv
 
+# Per-service data copies staged by scripts/deploy/stage_service_data.py for
+# Zoho Catalyst AppSail deployment (see docs/deployment/DEPLOY.md) - same
+# reproducible-not-committed policy as the shared data/ dir above.
+backend/services/*/data/
+
 # ==========================================================================
 # Confidential source documents - internal reference only, never pushed
 # ==========================================================================

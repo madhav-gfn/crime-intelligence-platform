@@ -1,0 +1,12 @@
+{
+  "command": "python3 -m uvicorn app.main:app --host 0.0.0.0 --port $X_ZOHO_CATALYST_LISTEN_PORT",
+  "buildPath": "./",
+  "stack": "python3.13",
+  "memory": 512,
+  "env_variables": {
+    "DATA_SEED_DIR": "./data/seed",
+    "OFFENDER_RISK_PATH": "./data/processed/offender-profiling/person_risk_scores.csv",
+    "DISTRICT_FORECASTS_PATH": "./data/processed/forecasting/district_forecasts.csv",
+    "DISTRICT_SOCIOECONOMIC_PATH": "./data/processed/sociology/district_socioeconomic_crime.csv"
+  }
+}

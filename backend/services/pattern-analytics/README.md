@@ -64,3 +64,8 @@ and district/case-level aggregates. Tokens are verified statelessly via
    over 5 years makes most (district, crime_type, 90-day-window) cells sparse
    by construction - the default `min_recent_count=3` reflects that. Turn it
    back up once this runs against real or higher-volume data.
+
+## Deployment
+
+See [docs/deployment/DEPLOY.md](../../../docs/deployment/DEPLOY.md) for the
+Zoho Catalyst AppSail deploy guide (backend-only, no frontend yet).

@@ -103,3 +103,8 @@ python scripts/data_generation/explainability/build_shap_explanations.py
 ```bash
 python -m pytest tests/ -v
 ```
+
+## Deployment
+
+See [docs/deployment/DEPLOY.md](../../../docs/deployment/DEPLOY.md) for the
+Zoho Catalyst AppSail deploy guide (backend-only, no frontend yet).

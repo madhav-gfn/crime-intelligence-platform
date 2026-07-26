@@ -1,0 +1,16 @@
+{
+  "appsail": {
+    "targets": [
+      "backend/services/auth-service",
+      "backend/services/network-analysis",
+      "backend/services/pattern-analytics",
+      "backend/services/sociological-insights",
+      "backend/services/financial-crime-analysis",
+      "backend/services/crime-forecasting",
+      "backend/services/offender-profiling",
+      "backend/services/investigator-decision-support",
+      "backend/services/explainable-ai",
+      "backend/services/conversational-interface"
+    ]
+  }
+}

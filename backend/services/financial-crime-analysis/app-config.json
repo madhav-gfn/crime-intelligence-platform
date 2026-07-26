@@ -1,0 +1,12 @@
+{
+  "command": "python3 -m uvicorn app.main:app --host 0.0.0.0 --port $X_ZOHO_CATALYST_LISTEN_PORT",
+  "buildPath": "./",
+  "stack": "python3.13",
+  "memory": 512,
+  "env_variables": {
+    "ACCOUNT_FEATURES_PATH": "./data/processed/financial-crime/account_features.csv",
+    "SUSPICIOUS_EDGES_PATH": "./data/processed/financial-crime/suspicious_edges.csv",
+    "PATTERNS_PATH": "./data/processed/financial-crime/laundering_patterns.json",
+    "EVAL_STATS_PATH": "./data/processed/financial-crime/eval_stats.json"
+  }
+}

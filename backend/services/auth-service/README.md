@@ -51,6 +51,7 @@ aggregates stay at `ANALYST`. Per service:
 | `sociological-insights` | none — district-level only | all endpoints |
 | `crime-forecasting` | none — district-level only | all endpoints |
 | `explainable-ai` | `/person/{id}` (real person's SHAP explanation) | `/methodology`, `/model-info`, `/predict-explain` (hypothetical profile) |
+| `conversational-interface` | none directly - `/api/chat/message` forwards the caller's own token to whichever downstream service answers the query, and that service's own gate applies | `/message`, `/capabilities`, `/session/{id}/history` (all `ANALYST` floor) |
 
 This was built incrementally: `offender-profiling` first, as a concrete
 end-to-end proof (real login, real token, real 401/403s verified against
@@ -123,3 +124,10 @@ python -m uvicorn app.main:app --reload --port 8020
 ```bash
 python -m pytest tests/ -v
 ```
+
+## Deployment
+
+See [docs/deployment/DEPLOY.md](../../../docs/deployment/DEPLOY.md) for the
+Zoho Catalyst AppSail deploy guide (backend-only, no frontend yet). This
+service's `JWT_SECRET` must be set to the same value across all 10 services
+- see this README's "How token verification works across services" above.

@@ -62,3 +62,8 @@ traces back to source records, per the platform's explainability requirement.
 In-memory graph, loaded once at startup from CSV. Fine for the ~11k-person
 demo dataset; would need to move to a real graph database and incremental
 loading before handling a live, growing case database.
+
+## Deployment
+
+See [docs/deployment/DEPLOY.md](../../../docs/deployment/DEPLOY.md) for the
+Zoho Catalyst AppSail deploy guide (backend-only, no frontend yet).
