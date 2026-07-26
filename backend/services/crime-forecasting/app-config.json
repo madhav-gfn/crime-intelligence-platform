@@ -1,9 +1,10 @@
 {
-  "command": "python3 -m uvicorn app.main:app --host 0.0.0.0 --port $X_ZOHO_CATALYST_LISTEN_PORT",
+  "command": "sh -c 'python3 -m uvicorn app.main:app --host 0.0.0.0 --port $X_ZOHO_CATALYST_LISTEN_PORT'",
   "buildPath": "./",
   "stack": "python3.13",
   "memory": 512,
   "env_variables": {
+    "PYTHONPATH": "./vendor",
     "FORECASTS_PATH": "./data/processed/forecasting/district_forecasts.csv",
     "FORECAST_STATS_PATH": "./data/processed/forecasting/forecast_stats.json"
   }

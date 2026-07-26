@@ -3,7 +3,11 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _SERVICE_DIR = Path(__file__).resolve().parents[1]
-_REPO_ROOT = _SERVICE_DIR.parents[2]
+# In a deployed container the uploaded directory is flat (no backend/services/<name>
+# nesting - see docs/deployment/DEPLOY.md), so this default is never actually reached
+# there: every *_PATH/*_DIR field below is overridden via env var in that case. Falling
+# back to _SERVICE_DIR keeps local dev (where the parents do go this deep) unchanged.
+_REPO_ROOT = _SERVICE_DIR.parents[2] if len(_SERVICE_DIR.parents) >= 3 else _SERVICE_DIR
 
 _DATA_DIR = _REPO_ROOT / "data" / "processed" / "offender-profiling"
 

@@ -75,6 +75,12 @@ data/seed/*.csv
 # reproducible-not-committed policy as the shared data/ dir above.
 backend/services/*/data/
 
+# Per-service Linux dependency vendoring, built by
+# scripts/deploy/vendor_service_deps.py for Zoho Catalyst AppSail deployment
+# (Catalyst's Managed Runtime does not run pip install for you) - regenerated
+# from requirements.txt before every deploy, never committed.
+backend/services/*/vendor/
+
 # ==========================================================================
 # Confidential source documents - internal reference only, never pushed
 # ==========================================================================

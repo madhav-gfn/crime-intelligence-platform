@@ -1,9 +1,10 @@
 {
-  "command": "python3 -m uvicorn app.main:app --host 0.0.0.0 --port $X_ZOHO_CATALYST_LISTEN_PORT",
+  "command": "sh -c 'python3 -m uvicorn app.main:app --host 0.0.0.0 --port $X_ZOHO_CATALYST_LISTEN_PORT'",
   "buildPath": "./",
   "stack": "python3.13",
   "memory": 1024,
   "env_variables": {
+    "PYTHONPATH": "./vendor",
     "PERSON_SCORES_PATH": "./data/processed/offender-profiling/person_risk_scores.csv",
     "MODEL_PATH": "./data/processed/offender-profiling/model.pkl",
     "FEATURE_METADATA_PATH": "./data/processed/offender-profiling/feature_metadata.json",

@@ -1,9 +1,10 @@
 {
-  "command": "python3 -m uvicorn app.main:app --host 0.0.0.0 --port $X_ZOHO_CATALYST_LISTEN_PORT",
+  "command": "sh -c 'python3 -m uvicorn app.main:app --host 0.0.0.0 --port $X_ZOHO_CATALYST_LISTEN_PORT'",
   "buildPath": "./",
   "stack": "python3.13",
   "memory": 512,
   "env_variables": {
-    "USERS_PATH": "./data/processed/auth/users.json"
+    "USERS_PATH": "./data/processed/auth/users.json",
+    "PYTHONPATH": "./vendor"
   }
 }
