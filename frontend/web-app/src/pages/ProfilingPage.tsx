@@ -62,12 +62,17 @@ export default function ProfilingPage() {
         eyebrow="Pillar 5"
         description="Recidivism risk prediction and psychological profiling using Random Forest"
       >
-        {modelInfo && (
-          <div className="text-xs text-muted text-right">
-            <div>Model: {modelInfo.model_name} ({modelInfo.algorithm})</div>
-            <div>Accuracy: {(modelInfo.accuracy * 100).toFixed(1)}% | F1: {(modelInfo.f1_score * 100).toFixed(1)}%</div>
-          </div>
-        )}
+        {modelInfo && (() => {
+          const selected = modelInfo.model_comparison[modelInfo.selected_model];
+          return (
+            <div className="text-xs text-muted text-right">
+              <div>Model: {modelInfo.selected_model}</div>
+              {selected && (
+                <div>Precision: {(selected.precision * 100).toFixed(1)}% | Recall: {(selected.recall * 100).toFixed(1)}% | F1: {(selected.f1 * 100).toFixed(1)}%</div>
+              )}
+            </div>
+          );
+        })()}
       </PageHeader>
 
       <div className="tabs">

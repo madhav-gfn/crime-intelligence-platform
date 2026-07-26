@@ -133,146 +133,218 @@ export interface HotspotCluster {
   point_count: number;
   centroid_lat: number;
   centroid_lon: number;
+  radius_km: number;
   top_district: string;
-  top_crime_type: string;
-  date_range: { start: string; end: string };
-  districts: string[];
+  crime_type_breakdown: Record<string, number>;
+  sample_fir_ids: string[];
+  geo_precise_fraction: number;
 }
 
 export interface HotspotResponse {
-  cluster_count: number;
-  noise_points: number;
+  filters: Record<string, unknown>;
   eps_km: number;
   min_points: number;
+  total_points_considered: number;
+  noise_points: number;
   clusters: HotspotCluster[];
 }
 
 export interface DistrictSeverityItem {
   district: string;
   state: string;
-  crime_count: number;
+  total_crimes: number;
+  violent_crime_ratio: number;
+  property_crime_ratio: number;
+  avg_property_value_inr: number;
+  crime_type_diversity: number;
+  unresolved_ratio: number;
   severity_tier: string;
-  pca_score: number;
-  cluster_id: number;
+  pca_x: number;
+  pca_y: number;
 }
 
 export interface DistrictSeverityResponse {
-  tiers: Record<string, DistrictSeverityItem[]>;
-  district_count: number;
+  min_crimes_threshold: number;
+  districts_included: number;
+  tiers: DistrictSeverityItem[];
 }
 
 export interface TrendPoint {
-  period: string | number;
+  bucket: string;
   count: number;
 }
 
 export interface TrendResponse {
   granularity: string;
-  crime_type?: string | null;
-  district?: string | null;
-  series: TrendPoint[];
+  filters: Record<string, unknown>;
+  points: TrendPoint[];
 }
 
 export interface EmergingItem {
-  crime_type: string;
   district: string;
   state: string;
+  crime_type_code: string;
   recent_count: number;
-  baseline_rate: number;
-  growth_ratio: number;
-  spike_label: string;
+  baseline_count: number;
+  recent_period_days: number;
+  baseline_period_days: number;
+  pct_change: number | null;
+  flagged_reason: string;
 }
 
 export interface EmergingResponse {
-  recent_days: number;
-  baseline_days: number;
-  spikes: EmergingItem[];
+  recent_window_days: number;
+  baseline_window_days: number;
+  min_recent_count: number;
+  alerts: EmergingItem[];
 }
 
 export interface SimilarCase {
   fir_id: string;
+  similarity: number;
+  crime_type_code: string;
   district: string;
-  crime_type: string;
-  similarity_score: number;
+  state: string;
+  date_occurred: string;
+  status: string;
+  matching_features: string[];
 }
 
 export interface SimilarCasesResponse {
-  query_fir_id: string;
-  similar: SimilarCase[];
+  source_fir_id: string;
+  source_crime_type: string;
+  top_n: number;
+  results: SimilarCase[];
 }
 
-export interface DatasetStats {
-  [key: string]: number | string;
+// Pattern Analytics' DatasetStats - see also the differently-shaped
+// DatasetStats variants for financial-crime / crime-forecasting below;
+// each service defines its own even though the frontend historically
+// treated them as interchangeable via index signature. Kept separate now.
+export interface PatternDatasetStats {
+  total_firs: number;
+  date_range_start: string;
+  date_range_end: string;
+  distinct_districts: number;
+  distinct_crime_types: number;
+  crime_type_counts: Record<string, number>;
 }
 
 // ── Sociological Insights ─────────────────────────────────────────────────────
+export interface DistrictSummary {
+  state: string;
+  district: string;
+  match_type: string;
+  population: number;
+  crime_rate_per_100k: number | null;
+}
+
 export interface DistrictListResponse {
-  count: number;
-  districts: string[];
+  total_census_districts: number;
+  matched_districts: number;
+  match_rate: number;
+  districts: DistrictSummary[];
 }
 
 export interface DistrictProfile {
-  district: string;
   state: string;
-  population?: number;
-  literacy_rate?: number;
-  urbanization_rate?: number;
-  sex_ratio?: number;
-  crime_rate_per_100k?: number;
-  total_crimes?: number;
-  [key: string]: unknown;
+  district: string;
+  fir_district_label: string;
+  match_type: string;
+  match_score: number;
+  population: number;
+  literacy_rate: number;
+  urbanization_rate: number;
+  workforce_participation_rate: number;
+  higher_education_rate: number;
+  amenity_index: number;
+  sc_st_share: number;
+  hindu_share: number;
+  muslim_share: number;
+  christian_share: number;
+  sikh_share: number;
+  total_crimes: number;
+  violent_crimes: number;
+  property_crimes: number;
+  violent_ratio: number;
+  property_ratio: number;
+  crime_rate_per_100k: number;
+  violent_crime_rate_per_100k: number;
+  property_crime_rate_per_100k: number;
 }
 
-export interface CorrelationPair {
+export interface CorrelationResult {
   indicator: string;
   crime_metric: string;
   pearson_r: number;
   p_value: number;
+  n: number;
+  interpretation: string;
 }
 
 export interface CorrelationsResponse {
-  district_count: number;
-  pairs: CorrelationPair[];
+  districts_included: number;
+  indicators_used: string[];
+  crime_metrics_used: string[];
+  excluded_fields_note: string;
+  results: CorrelationResult[];
 }
 
-export interface RankingItem {
-  district: string;
+export interface RankingEntry {
   state: string;
-  [key: string]: unknown;
+  district: string;
+  value: number;
+  population: number;
+  crime_rate_per_100k: number;
 }
 
 export interface RankingResponse {
   sort_by: string;
   order: string;
-  total: number;
-  items: RankingItem[];
+  limit: number;
+  districts: RankingEntry[];
 }
 
 export interface ScatterPoint {
-  district: string;
   state: string;
+  district: string;
   x: number;
   y: number;
+  population: number;
 }
 
 export interface ScatterResponse {
   indicator: string;
   crime_metric: string;
-  pearson_r: number;
   points: ScatterPoint[];
 }
 
 // ── Offender Profiling ────────────────────────────────────────────────────────
-export interface ModelInfo {
-  model_name: string;
-  algorithm: string;
-  accuracy: number;
+export interface ModelComparisonEntry {
   precision: number;
   recall: number;
-  f1_score: number;
-  training_size: number;
-  test_size: number;
-  features: string[];
+  f1: number;
+  roc_auc: number | null;
+}
+
+export interface ModelInfo {
+  follow_up_days: number;
+  dataset_max_date: string;
+  eligibility_cutoff_date: string;
+  total_case_appearances: number;
+  eligible_case_appearances: number;
+  censored_case_appearances: number;
+  positive_rate: number;
+  train_appearances: number;
+  test_appearances: number;
+  train_persons: number;
+  test_persons: number;
+  selected_model: string;
+  model_comparison: Record<string, ModelComparisonEntry>;
+  feature_importances: Record<string, number>;
+  risk_tier_thresholds: Record<string, number>;
+  risk_tier_counts: Record<string, number>;
+  total_accused_persons_scored: number;
 }
 
 export interface PersonRiskProfile {
@@ -302,14 +374,37 @@ export interface RiskListResponse {
 }
 
 // ── Financial Crime ───────────────────────────────────────────────────────────
+export interface FinancialDatasetStats {
+  total_accounts: number;
+  total_transactions: number;
+  ground_truth_laundering_accounts: number;
+  ground_truth_laundering_transactions: number;
+  risk_tier_counts: Record<string, number>;
+  thresholds: Record<string, unknown>;
+}
+
 export interface AccountProfile {
   account_id: string;
-  risk_tier: string;
+  bank_name: string | null;
+  entity_id: string | null;
+  entity_name: string | null;
+  out_amount: number;
+  out_count: number;
+  out_degree: number;
+  in_amount: number;
+  in_count: number;
+  in_degree: number;
+  distinct_currencies: number;
+  max_single_txn: number;
+  laundering_txn_count: number;
+  ground_truth_laundering: boolean;
+  flag_high_fan_out: boolean;
+  flag_high_fan_in: boolean;
+  flag_rapid_passthrough: boolean;
+  flag_cross_currency: boolean;
+  flag_high_value_txn: boolean;
   risk_score: number;
-  total_transactions: number;
-  flagged_transactions: number;
-  typologies: string[];
-  [key: string]: unknown;
+  risk_tier: string;
 }
 
 export interface SuspiciousAccountsResponse {
@@ -318,18 +413,41 @@ export interface SuspiciousAccountsResponse {
   accounts: AccountProfile[];
 }
 
+export interface PatternTransaction {
+  timestamp: string;
+  from_bank: string;
+  from_account: string;
+  to_bank: string;
+  to_account: string;
+  amount_received: number;
+  receiving_currency: string;
+  amount_paid: number;
+  payment_currency: string;
+  payment_format: string;
+  is_laundering: number;
+}
+
 export interface AMLPattern {
   pattern_id: string;
   typology: string;
-  account_count: number;
-  transaction_count: number;
-  total_amount: number;
-  [key: string]: unknown;
+  descriptor: string;
+  n_transactions: number;
+  accounts_involved: string[];
+  transactions: PatternTransaction[];
 }
 
 export interface PatternsResponse {
-  count: number;
+  typologies: string[];
+  total_patterns: number;
   patterns: AMLPattern[];
+}
+
+export interface FinancialEdgeOut {
+  from_id: string;
+  to_id: string;
+  shared_txn_count: number;
+  total_amount_paid: number;
+  laundering_txn_count: number;
 }
 
 export interface FinancialPathResponse {
@@ -337,118 +455,232 @@ export interface FinancialPathResponse {
   target: string;
   found: boolean;
   path: string[];
-  [key: string]: unknown;
+  hops: FinancialEdgeOut[];
+}
+
+export interface PRFResult {
+  flagged_accounts: number;
+  true_positives: number;
+  false_positives: number;
+  false_negatives: number;
+  precision: number;
+  recall: number;
+  f1: number;
 }
 
 export interface EvaluationResponse {
-  precision: number;
-  recall: number;
-  f1_score: number;
-  auc_roc?: number;
-  [key: string]: unknown;
+  ground_truth_laundering_accounts: number;
+  total_accounts: number;
+  total_transactions: number;
+  ground_truth_laundering_transactions: number;
+  thresholds: Record<string, unknown>;
+  high_only: PRFResult;
+  medium_or_high: PRFResult;
 }
 
 // ── Crime Forecasting ─────────────────────────────────────────────────────────
+export interface ForecastDatasetStats {
+  total_ncrb_districts: number;
+  districts_with_complete_2001_2012_history: number;
+  districts_excluded_incomplete_history: number;
+  series_forecast: number;
+  train_years: number[];
+  test_years: number[];
+  forecast_years: number[];
+  model_win_counts: Record<string, number>;
+  series_where_naive_was_beaten: number;
+  series_where_naive_was_beaten_pct: number;
+  mean_backtest_mae_by_model: Record<string, number>;
+}
+
 export interface ForecastSeries {
   series: string;
+  selected_model: string;
+  backtest_mae: number;
+  backtest_mape: number | null;
+  naive_backtest_mae: number;
+  linear_trend_backtest_mae: number;
+  moving_average_backtest_mae: number;
   last_observed_year: number;
   last_observed_value: number;
   forecast_2013: number;
-  selected_model: string;
-  [key: string]: unknown;
+  forecast_2014: number;
+  forecast_2015: number;
 }
 
 export interface DistrictForecastBundle {
-  district: string;
   state: string;
+  district: string;
   series: ForecastSeries[];
 }
 
+export interface ForecastRankingEntry {
+  state: string;
+  district: string;
+  last_observed_value: number;
+  forecast_2015: number;
+  pct_change: number | null;
+  selected_model: string;
+  backtest_mae: number;
+}
+
+export interface ForecastRankingResponse {
+  series: string;
+  order: string;
+  limit: number;
+  districts: ForecastRankingEntry[];
+}
+
 // ── Explainable AI ────────────────────────────────────────────────────────────
-export interface ShapDriver {
+export interface FeatureContribution {
   feature: string;
+  feature_value: number;
   shap_value: number;
-  feature_value: unknown;
 }
 
 export interface PersonExplanation {
   person_id: string;
-  full_name: string;
+  full_name: string | null;
   risk_tier: string;
   predicted_reoffend_probability_365d: number;
-  base_probability: number;
-  top_drivers: ShapDriver[];
-  [key: string]: unknown;
+  base_value: number;
+  reconstruction_error: number;
+  top_drivers: FeatureContribution[];
+  all_contributions: FeatureContribution[];
 }
 
 export interface PredictExplainResponse {
-  risk_tier: string;
   predicted_reoffend_probability_365d: number;
-  base_probability: number;
-  top_drivers: ShapDriver[];
+  risk_tier: string;
+  base_value: number;
+  top_drivers: FeatureContribution[];
+  all_contributions: FeatureContribution[];
+  inputs: Record<string, unknown>;
+}
+
+export interface MethodologyEntry {
+  service: string;
+  approach: string;
+  transparency_mechanism: string;
 }
 
 export interface MethodologyOverview {
-  method: string;
-  model_explained: string;
-  scope: string;
+  summary: string;
+  pillars: MethodologyEntry[];
+}
+
+export interface ConcordanceInfo {
+  metric: string;
+  value: number;
   note: string;
 }
 
 export interface ModelExplainabilityInfo {
-  [key: string]: unknown;
+  method: string;
+  base_value: number;
+  mean_abs_shap_by_feature: Record<string, number>;
+  top_5_drivers: string[];
+  concordance_with_rf_builtin_importance: ConcordanceInfo;
+  total_persons_explained: number;
+  max_reconstruction_error: number;
 }
 
 // ── Investigator Decision Support ─────────────────────────────────────────────
 export interface CasePriority {
   fir_id: string;
-  district: string;
   state: string;
-  crime_type: string;
+  district: string;
+  crime_type_code: string;
+  status: string;
+  date_reported: string;
+  age_days: number;
+  violent_points: number;
+  accused_risk_points: number;
+  hotspot_points: number;
+  stale_points: number;
   priority_score: number;
   priority_tier: string;
-  accused_ids: string[];
-  status: string;
-  [key: string]: unknown;
+  highest_accused_risk_tier: string | null;
 }
 
 export interface CasePriorityListResponse {
+  priority_tier: string | null;
   count: number;
-  priority_tier?: string | null;
   cases: CasePriority[];
 }
 
 export interface DecisionSupportStats {
-  [key: string]: number | string;
+  total_cases: number;
+  total_unresolved_cases: number;
+  priority_tier_counts: Record<string, number>;
+  priority_tier_thresholds: Record<string, number>;
+  stale_case_days_threshold: number;
+  stale_unresolved_case_count: number;
+  dataset_reference_date: string;
+}
+
+export interface OffenderRiskSummary {
+  prior_case_count: number;
+  distinct_crime_types_count: number;
+  predicted_reoffend_probability_365d: number;
+  risk_tier: string;
+}
+
+export interface Associate {
+  person_id: string;
+  full_name: string | null;
+  shared_fir_count: number;
+}
+
+export interface CaseAppearance {
+  fir_id: string;
+  role: string;
+  crime_type_code: string;
+  date_reported: string;
+  status: string;
+  district: string;
 }
 
 export interface PersonDossier {
   person_id: string;
-  full_name: string;
-  age: number;
-  gender: string;
-  address_district: string;
-  address_state: string;
-  cases: CasePriority[];
+  full_name: string | null;
+  gender: string | null;
+  age: number | null;
+  address_district: string | null;
+  address_state: string | null;
+  offender_risk: OffenderRiskSummary | null;
   network_degree: number;
-  offender_risk?: PersonRiskProfile | null;
-  [key: string]: unknown;
+  top_associates: Associate[];
+  cases: CaseAppearance[];
+}
+
+export interface SocioeconomicContext {
+  available: boolean;
+  literacy_rate?: number | null;
+  urbanization_rate?: number | null;
+  crime_rate_per_100k?: number | null;
+}
+
+export interface ForecastContext {
+  available: boolean;
+  last_observed_year?: number | null;
+  last_observed_value?: number | null;
+  forecast_2015?: number | null;
+  pct_change?: number | null;
+  selected_model?: string | null;
 }
 
 export interface DistrictBriefing {
-  district: string;
   state: string;
+  district: string;
   total_cases: number;
   unresolved_cases: number;
-  is_hotspot: boolean;
+  violent_ratio: number;
+  property_ratio: number;
   case_volume_percentile_rank: number;
-  socioeconomic?: {
-    available: boolean;
-    literacy_rate?: number;
-    urbanization_rate?: number;
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
+  is_hotspot: boolean;
+  socioeconomic: SocioeconomicContext;
+  forecast: ForecastContext;
 }
 
 // ── Chat / Conversational Interface ──────────────────────────────────────────

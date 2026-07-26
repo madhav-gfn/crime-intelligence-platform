@@ -59,12 +59,14 @@ export default function SociologyPage() {
             {loadRank ? <LoadingSpinner /> : (
               <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={rankings?.items || []} margin={{ bottom: 100 }}>
+                  <BarChart data={rankings?.districts || []} margin={{ bottom: 100 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                     <XAxis dataKey="district" stroke="var(--text-muted)" fontSize={11} angle={-45} textAnchor="end" interval={0} />
                     <YAxis stroke="var(--text-muted)" fontSize={12} />
                     <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)' }} cursor={{ fill: 'var(--bg-hover)' }} />
-                    <Bar dataKey={sortBy} fill="var(--accent-cyan)" radius={[4, 4, 0, 0]} />
+                    {/* Backend always returns the sorted indicator's value in a generic
+                        "value" field, not a field literally named after sortBy. */}
+                    <Bar dataKey="value" fill="var(--accent-cyan)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -91,7 +93,7 @@ export default function SociologyPage() {
                     return <span className="text-xs">{label}</span>;
                   }}
                 ]}
-                data={correlations?.pairs || []}
+                data={correlations?.results || []}
               />
             )}
           </div>
@@ -108,12 +110,11 @@ export default function SociologyPage() {
                 <option value="sex_ratio">Sex Ratio</option>
               </select>
             </div>
-            
+
             {loadScatter ? <LoadingSpinner /> : (
               <div className="flex-1 min-h-0 relative">
-                <div className="absolute top-4 left-4 z-10 text-xs font-mono bg-[var(--bg-elevated)] p-2 rounded border border-[var(--border)]">
-                  Pearson r: <span className={scatter!.pearson_r > 0 ? 'text-risk-high' : 'text-risk-low'}>{scatter?.pearson_r.toFixed(3)}</span>
-                </div>
+                {/* The scatter endpoint doesn't return a precomputed Pearson r - that
+                    lives on /correlations instead. See the Correlations tab for it. */}
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />

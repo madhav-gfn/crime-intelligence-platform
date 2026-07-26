@@ -74,8 +74,7 @@ export default function ExplainPage() {
             </p>
             {info && (
               <div className="mt-4 pt-4 border-t border-[rgba(0,212,255,0.2)] text-[10px] text-cyan font-mono">
-                Methodology: {info.method} <br/>
-                Scope: {info.scope}
+                {info.summary}
               </div>
             )}
           </div>
@@ -97,7 +96,7 @@ export default function ExplainPage() {
                       Final Prob: <span className="text-high font-bold">{(explanation.predicted_reoffend_probability_365d * 100).toFixed(1)}%</span>
                     </div>
                     <div className="text-xs text-muted font-mono">
-                      Base Prob: {(explanation.base_probability * 100).toFixed(1)}%
+                      Base Prob: {(explanation.base_value * 100).toFixed(1)}%
                     </div>
                   </div>
                 </div>

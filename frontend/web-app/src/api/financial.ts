@@ -1,12 +1,12 @@
 import { financialClient } from '../lib/axios';
 import type {
-  AccountProfile, DatasetStats, EvaluationResponse,
+  AccountProfile, FinancialDatasetStats, EvaluationResponse,
   FinancialPathResponse, PatternsResponse, SuspiciousAccountsResponse,
 } from '../types/api';
 
 export const financialApi = {
   stats: () =>
-    financialClient.get<DatasetStats>('/api/financial/stats').then((r) => r.data),
+    financialClient.get<FinancialDatasetStats>('/api/financial/stats').then((r) => r.data),
 
   account: (account_id: string) =>
     financialClient.get<AccountProfile>(`/api/financial/account/${encodeURIComponent(account_id)}`).then((r) => r.data),

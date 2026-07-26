@@ -49,10 +49,10 @@ export default function DashboardPage() {
               icon={FileText} 
               color="violet"
             />
-            <StatCard 
-              label="Districts Tracked" 
-              value={patStats?.total_districts_with_crimes || 0} 
-              icon={Flame} 
+            <StatCard
+              label="Districts Tracked"
+              value={patStats?.distinct_districts || 0}
+              icon={Flame}
               color="gold"
             />
             <StatCard 
@@ -67,10 +67,10 @@ export default function DashboardPage() {
               icon={ClipboardList} 
               color="red"
             />
-            <StatCard 
-              label="Priority HIGH Cases" 
-              value={decStats?.high_priority_cases || 0} 
-              icon={Brain} 
+            <StatCard
+              label="Priority HIGH Cases"
+              value={decStats?.priority_tier_counts?.HIGH || 0}
+              icon={Brain}
               color="red"
             />
           </div>
@@ -141,7 +141,7 @@ export default function DashboardPage() {
                         <div>
                           <div className="font-mono text-sm text-cyan mb-1">{c.fir_id}</div>
                           <div className="text-xs text-muted">
-                            {c.district}, {c.state} • {c.crime_type}
+                            {c.district}, {c.state} • {c.crime_type_code}
                           </div>
                         </div>
                         <div className="flex items-center gap-4">

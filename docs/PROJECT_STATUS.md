@@ -33,7 +33,7 @@ independently), `routers/`, and `tests/`.
 
 | # | Pillar | Service dir | Port | Data | Tests | Deployed? |
 |---|---|---|---|---|---|---|
-| 1 | Conversational interface | `conversational-interface` | 8022 | seed (district names only) | 12 | live, needs 7 downstream URLs redeployed |
+| 1 | Conversational interface | `conversational-interface` | 8022 | seed (district names only) | 12 | **live** |
 | 2 | Criminal network & relationship analysis | `network-analysis` | 8010 | synthetic seed | 13 | **live** |
 | 3 | Crime pattern & trend analytics | `pattern-analytics` | 8011 | synthetic seed | 13 | **live** |
 | 4 | Sociological crime insights | `sociological-insights` | 8012 | real 2011 Census + NCRB-calibrated | 14 | **live** |
@@ -47,13 +47,16 @@ independently), `routers/`, and `tests/`.
 **122 tests total**, all passing as of the last full run. **All 10
 services are live on Zoho Catalyst AppSail**, verified via `/health`
 returning real loaded-record counts (not just a bare 200) for each one —
-see the deployed URLs in `frontend/web-app/.env.local`. The one
-outstanding step: `conversational-interface`'s 7 downstream `*_URL` env
-vars were updated from `REPLACE_ME_...` placeholders to the real deployed
-URLs (both in its `app-config.json` and, more importantly, in the actual
-Catalyst Console — Console-deployed services ignore the zip's
-`app-config.json`), but it needs a **redeploy** for that change to take
-effect; not yet confirmed done as of this writing.
+see the deployed URLs in `frontend/web-app/.env.local`. `conversational-
+interface`'s 7 downstream `*_URL` env vars are set to the real deployed
+URLs and confirmed working: a real browser test (login as `admin`, ask
+"who is ACC-002543" in the Chat Interface page) round-tripped correctly
+through `conversational-interface -> investigator-decision-support` and
+returned a real synthesized dossier reply with a `200` status badge. The
+frontend (`frontend/web-app/`, deployed to Zoho Catalyst Slate - see §6)
+is live too, at https://crime-intel-frontend-cgujvxbi.onslate.in — this
+is a genuinely working, end-to-end deployed platform as of this writing,
+not just individually-healthy services.
 
 ### What each pillar actually does
 
@@ -324,19 +327,40 @@ owns the repo.
   scikit-learn + numba/llvmlite, all vendored as Linux wheels) and
   uploaded successfully — no longer a real risk, but the largest zip by
   far if it ever needs rebuilding.
+- **CORS was the last real bug, and the trickiest to find.** Once the
+  frontend could actually reach the backend, every request failed with
+  "No 'Access-Control-Allow-Origin' header." Root cause, found by curling
+  the preflight directly: Zoho's AppSail edge intercepts the `OPTIONS`
+  preflight request **before it ever reaches the app** (confirmed - the
+  `OPTIONS` response had none of the `X-Catalyst-Function-*` headers a
+  real request gets) and answers it itself based on a per-AppSail-service
+  "Authorized Domains" allowlist (Console -> Cloud Scale -> Authentication
+  -> [set up any auth method] -> Additional Settings -> Authorized
+  Domains) - **not** a project-wide setting, and **not** the same as
+  Catalyst's native-auth or API-Gateway CORS features (both dead ends,
+  scoped to Functions/Web Client, not AppSail). Confusingly, this
+  platform's 10 services span **two different Catalyst domain IDs**
+  (`50042931907` and `50042970888`), and the allowlist had to be
+  configured once per domain, not once per project or once per service.
+  Once the frontend's domain was authorized on both, a second bug
+  appeared: this app's own `CORSMiddleware` (`allow_origins=["*"]`) was
+  *also* adding its own header, producing two `Access-Control-Allow-Origin`
+  values on the same response - which browsers reject outright. Fixed by
+  removing `CORSMiddleware` entirely from all 10 services' `app/main.py`;
+  CORS is Catalyst's responsibility now, not the app's. Verified with a
+  real browser test end-to-end (see above) after all 10 were redeployed.
 
 ## 9. Suggested next steps (not started, for the user to prioritize)
 
 In roughly the order they'd naturally come up:
 
-1. Confirm `conversational-interface`'s redeploy actually picked up the 7
-   real downstream URLs — test a real chat message end-to-end, not just
-   `/health`.
+1. ~~Confirm `conversational-interface`'s redeploy~~ and ~~fix CORS~~ —
+   both done. Verified with a real browser test end-to-end (see §2).
 2. ~~Deploy the frontend~~ — done:
    https://crime-intel-frontend-cgujvxbi.onslate.in (unlike AppSail,
    Slate's CLI link/deploy commands worked without hitting the
    `appsailConfig.map` bug). Delete the unused, broken GitHub-integration
-   Slate app left over from the first attempt (see §6).
+   Slate app left over from the first attempt (see §6) - still not done.
 3. Decide the fate of the empty scaffold directories (§5) — delete, or
    turn into real backlog items.
 4. Decide whether `scripts/deploy/*.zip` belong in git history (§7).

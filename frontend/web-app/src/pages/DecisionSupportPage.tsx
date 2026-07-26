@@ -86,8 +86,10 @@ export default function DecisionSupportPage() {
                           <div className="font-mono text-cyan text-sm">{c.fir_id}</div>
                           <span className="font-mono font-bold">{c.priority_score.toFixed(1)}</span>
                         </div>
-                        <div className="text-xs text-muted mb-2">{c.district}, {c.state} • {c.crime_type}</div>
-                        <div className="text-xs font-mono text-dim">Accused: {c.accused_ids.join(', ')}</div>
+                        <div className="text-xs text-muted mb-2">{c.district}, {c.state} • {c.crime_type_code}</div>
+                        {c.highest_accused_risk_tier && (
+                          <div className="text-xs font-mono text-dim">Highest accused risk: {c.highest_accused_risk_tier}</div>
+                        )}
                       </div>
                     ))}
                     {tierCases.length === 0 && (
@@ -164,21 +166,36 @@ export default function DecisionSupportPage() {
               <div className="card col-span-2">
                 <h3 className="mb-4">Case History</h3>
                 <div className="flex-col gap-3">
-                  {dossier.cases.map((c: any) => (
+                  {dossier.cases.map((c) => (
                     <div key={c.fir_id} className="p-4 border border-[var(--border)] rounded-md flex justify-between items-center bg-[var(--bg-elevated)]">
                       <div>
                         <div className="font-mono text-cyan mb-1">{c.fir_id}</div>
-                        <div className="text-sm">{c.crime_type}</div>
-                        <div className="text-xs text-muted mt-1">{c.district}, {c.state}</div>
+                        <div className="text-sm">{c.crime_type_code}</div>
+                        <div className="text-xs text-muted mt-1">{c.district} • {c.date_reported}</div>
                       </div>
                       <div className="text-right">
-                        <RiskBadge tier={c.priority_tier} />
-                        <div className="text-xs text-muted mt-2 font-mono">Priority: {c.priority_score.toFixed(1)}</div>
+                        <div className="text-xs uppercase text-muted">{c.role}</div>
+                        <div className="text-xs text-muted mt-2 font-mono">{c.status}</div>
                       </div>
                     </div>
                   ))}
                   {dossier.cases.length === 0 && <div className="text-muted">No known cases.</div>}
                 </div>
+
+                {dossier.top_associates.length > 0 && (
+                  <>
+                    <h3 className="mb-4 mt-6">Top Associates</h3>
+                    <div className="flex-col gap-2">
+                      {dossier.top_associates.map((a) => (
+                        <div key={a.person_id} className="flex justify-between text-sm p-2 bg-[var(--bg-elevated)] rounded border border-[var(--border)]">
+                          <span className="font-mono text-cyan">{a.person_id}</span>
+                          <span className="text-muted">{a.full_name ?? '—'}</span>
+                          <span className="font-mono">{a.shared_fir_count} shared case(s)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}

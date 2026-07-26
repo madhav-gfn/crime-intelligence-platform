@@ -6,6 +6,17 @@ import { authApi } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 
+// Fixed demo accounts - see scripts/data_generation/auth/build_demo_users.py.
+// Not secrets: this is a hackathon/demo deployment with no real users yet.
+const DEMO_ACCOUNTS: { username: string; password: string; role: string }[] = [
+  { username: 'admin', password: 'Admin@Demo123', role: 'ADMIN' },
+  { username: 'sp_reddy', password: 'Reddy@Demo123', role: 'ADMIN' },
+  { username: 'pi_sharma', password: 'Sharma@Demo123', role: 'INVESTIGATOR' },
+  { username: 'si_verma', password: 'Verma@Demo123', role: 'INVESTIGATOR' },
+  { username: 'analyst_iyer', password: 'Iyer@Demo123', role: 'ANALYST' },
+  { username: 'analyst_gupta', password: 'Gupta@Demo123', role: 'ANALYST' },
+];
+
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -103,6 +114,31 @@ export default function LoginPage() {
             {loading ? <Loader2 className="animate-spin" size={18} /> : 'Secure Login'}
           </button>
         </form>
+
+        <div className="demo-credentials" style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', marginBottom: '10px' }}>
+            Demo credentials — click a row to fill
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {DEMO_ACCOUNTS.map((acct) => (
+              <button
+                key={acct.username}
+                type="button"
+                onClick={() => { setUsername(acct.username); setPassword(acct.password); setError(null); }}
+                style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  width: '100%', padding: '8px 10px', fontFamily: 'var(--font-mono, monospace)',
+                  fontSize: '12px', textAlign: 'left', cursor: 'pointer',
+                  background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+                  borderRadius: '6px', color: 'var(--text-primary)',
+                }}
+              >
+                <span>{acct.username} / {acct.password}</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{acct.role}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </motion.div>
     </div>
   );

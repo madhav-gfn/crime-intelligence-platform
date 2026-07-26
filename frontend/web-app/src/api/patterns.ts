@@ -1,12 +1,12 @@
 import { patternsClient } from '../lib/axios';
 import type {
-  DatasetStats, DistrictSeverityResponse, EmergingResponse,
+  PatternDatasetStats, DistrictSeverityResponse, EmergingResponse,
   HotspotResponse, SimilarCasesResponse, TrendResponse,
 } from '../types/api';
 
 export const patternsApi = {
   stats: () =>
-    patternsClient.get<DatasetStats>('/api/patterns/stats').then((r) => r.data),
+    patternsClient.get<PatternDatasetStats>('/api/patterns/stats').then((r) => r.data),
 
   hotspots: (params?: {
     crime_type?: string;

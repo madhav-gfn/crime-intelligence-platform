@@ -5,6 +5,21 @@ import PageHeader from '../components/ui/PageHeader';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import DataTable from '../components/ui/DataTable';
 import { financialApi } from '../api/financial';
+import type { AccountProfile } from '../types/api';
+
+// Backend flags suspicious accounts via boolean indicators rather than a
+// single "typologies" list - derive display labels from whichever are set.
+const FLAG_LABELS: [keyof AccountProfile, string][] = [
+  ['flag_high_fan_out', 'high fan-out'],
+  ['flag_high_fan_in', 'high fan-in'],
+  ['flag_rapid_passthrough', 'rapid passthrough'],
+  ['flag_cross_currency', 'cross-currency'],
+  ['flag_high_value_txn', 'high-value txn'],
+];
+
+function activeFlags(account: AccountProfile): string[] {
+  return FLAG_LABELS.filter(([key]) => account[key]).map(([, label]) => label);
+}
 
 export default function FinancialPage() {
   const [activeTab, setActiveTab] = useState<'ACCOUNTS' | 'PATTERNS' | 'PATH'>('ACCOUNTS');
@@ -47,8 +62,8 @@ export default function FinancialPage() {
           </div>
           <div className="divider w-px h-8" />
           <div className="text-right">
-            <div className="text-xs text-muted">Flagged Accounts</div>
-            <div className="font-mono text-high">{stats?.flagged_accounts.toLocaleString() || '--'}</div>
+            <div className="text-xs text-muted">HIGH-Risk Accounts</div>
+            <div className="font-mono text-high">{(stats?.risk_tier_counts?.HIGH ?? 0).toLocaleString()}</div>
           </div>
         </div>
       </PageHeader>
@@ -64,15 +79,15 @@ export default function FinancialPage() {
           <div className="card">
             <h3 className="mb-4">Suspicious Account Monitoring</h3>
             {loadAccounts ? <LoadingSpinner /> : (
-              <DataTable 
+              <DataTable
                 columns={[
                   { key: 'account_id', label: 'Account ID', render: a => <span className="font-mono text-cyan">{a.account_id}</span> },
                   { key: 'risk_score', label: 'Risk Score', render: a => <span className="font-mono text-high font-bold">{a.risk_score.toFixed(1)}</span> },
-                  { key: 'total_transactions', label: 'Total Txns', render: a => <span className="font-mono">{a.total_transactions}</span> },
-                  { key: 'flagged_transactions', label: 'Flagged Txns', render: a => <span className="font-mono text-gold">{a.flagged_transactions}</span> },
-                  { key: 'typologies', label: 'Detected Typologies', render: a => (
+                  { key: 'total_transactions', label: 'Total Txns', render: a => <span className="font-mono">{a.out_count + a.in_count}</span> },
+                  { key: 'laundering_txn_count', label: 'Laundering Txns', render: a => <span className="font-mono text-gold">{a.laundering_txn_count}</span> },
+                  { key: 'flags', label: 'Triggered Flags', render: a => (
                     <div className="flex flex-wrap gap-1">
-                      {a.typologies.map((t: string) => <span key={t} className="px-1.5 py-0.5 bg-[var(--bg-elevated)] border border-[var(--border)] rounded text-[10px] uppercase">{t}</span>)}
+                      {activeFlags(a).map((t) => <span key={t} className="px-1.5 py-0.5 bg-[var(--bg-elevated)] border border-[var(--border)] rounded text-[10px] uppercase">{t}</span>)}
                     </div>
                   ) },
                 ]}
@@ -92,13 +107,13 @@ export default function FinancialPage() {
                 <div className="text-xs text-muted font-mono mb-1">{p.pattern_id}</div>
                 <h3 className="mb-4 text-risk-high">{p.typology.replace(/_/g, ' ')}</h3>
                 <div className="flex-col gap-2 mb-2">
-                  <div className="flex justify-between text-sm"><span className="text-muted">Accounts</span><span className="font-mono">{p.account_count}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted">Transactions</span><span className="font-mono">{p.transaction_count}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted">Accounts</span><span className="font-mono">{p.accounts_involved.length}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted">Transactions</span><span className="font-mono">{p.n_transactions}</span></div>
                 </div>
                 <div className="divider" />
                 <div className="text-right">
                   <div className="text-[10px] uppercase text-muted">Total Exposure</div>
-                  <div className="font-mono text-xl text-cyan">₹{(p.total_amount / 100000).toFixed(1)}L</div>
+                  <div className="font-mono text-xl text-cyan">₹{(p.transactions.reduce((sum, t) => sum + t.amount_paid, 0) / 100000).toFixed(1)}L</div>
                 </div>
               </div>
             ))}

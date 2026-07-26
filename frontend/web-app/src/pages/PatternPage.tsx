@@ -61,8 +61,16 @@ export default function PatternPage() {
 
   const severityChartData = useMemo(() => {
     if (!severityData) return [];
-    return Object.values(severityData.tiers).flat().sort((a, b) => b.crime_count - a.crime_count).slice(0, 50);
+    return [...severityData.tiers].sort((a, b) => b.total_crimes - a.total_crimes).slice(0, 50);
   }, [severityData]);
+
+  // Backend returns a district-count-keyed breakdown per cluster, not a single
+  // "top crime type" string - derive the most frequent one for display.
+  const topCrimeType = (breakdown: Record<string, number>): string => {
+    const entries = Object.entries(breakdown);
+    if (entries.length === 0) return 'unknown';
+    return entries.sort((a, b) => b[1] - a[1])[0][0];
+  };
 
   const SEVERITY_COLORS: Record<string, string> = {
     'CRITICAL': 'var(--risk-high)',
@@ -128,7 +136,7 @@ export default function PatternPage() {
                   <Popup className="dark-popup">
                     <div className="font-mono text-xs text-muted mb-1">Cluster #{cluster.cluster_id}</div>
                     <div className="font-bold text-sm mb-1">{cluster.top_district}</div>
-                    <div className="text-xs text-high">{cluster.top_crime_type}</div>
+                    <div className="text-xs text-high">{topCrimeType(cluster.crime_type_breakdown)}</div>
                     <div className="divider" />
                     <div className="font-mono text-sm">{cluster.point_count} incidents</div>
                   </Popup>
@@ -138,7 +146,7 @@ export default function PatternPage() {
 
             <div className="absolute bottom-4 right-4 z-[400] bg-[var(--bg-elevated)] p-3 rounded-md border border-[var(--border)] shadow-lg">
               <div className="text-xs text-muted font-mono mb-1">DBSCAN Clusters</div>
-              <div className="text-xl font-mono">{hotspotsData?.cluster_count || 0}</div>
+              <div className="text-xl font-mono">{hotspotsData?.clusters.length || 0}</div>
             </div>
           </div>
         )}
@@ -149,9 +157,9 @@ export default function PatternPage() {
             {loadTrends ? <LoadingSpinner /> : (
               <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trendsData?.series || []}>
+                  <LineChart data={trendsData?.points || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                    <XAxis dataKey="period" stroke="var(--text-muted)" fontSize={12} tickMargin={10} />
+                    <XAxis dataKey="bucket" stroke="var(--text-muted)" fontSize={12} tickMargin={10} />
                     <YAxis stroke="var(--text-muted)" fontSize={12} tickFormatter={v => v.toLocaleString()} />
                     <RechartsTooltip 
                       contentStyle={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '6px' }}
@@ -179,7 +187,7 @@ export default function PatternPage() {
                       contentStyle={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
                       cursor={{ fill: 'var(--bg-hover)' }}
                     />
-                    <Bar dataKey="crime_count" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="total_crimes" radius={[0, 4, 4, 0]}>
                       {severityChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={SEVERITY_COLORS[entry.severity_tier] || 'var(--text-dim)'} />
                       ))}
@@ -194,20 +202,20 @@ export default function PatternPage() {
         {activeTab === 'EMERGING' && (
           <div className="card h-full overflow-y-auto">
             <h3 className="mb-4">Emerging Spikes (Last 90 vs Prior 180 Days)</h3>
-            {loadEmerg ? <LoadingSpinner /> : !emergingData?.spikes.length ? (
+            {loadEmerg ? <LoadingSpinner /> : !emergingData?.alerts.length ? (
               <div className="text-muted text-center py-10">No statistically significant spikes detected.</div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                {emergingData.spikes.map((spike, i) => (
+                {emergingData.alerts.map((spike, i) => (
                   <div key={i} className="p-4 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-md relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-[var(--risk-high)] opacity-10 blur-xl rounded-full" />
                     <div className="text-xs text-muted mb-1">{spike.district}, {spike.state}</div>
-                    <div className="font-bold text-sm mb-3">{spike.crime_type}</div>
-                    
+                    <div className="font-bold text-sm mb-3">{spike.crime_type_code}</div>
+
                     <div className="flex items-end justify-between">
                       <div>
                         <div className="text-[10px] uppercase text-muted">Growth</div>
-                        <div className="text-lg font-mono text-high">{(spike.growth_ratio * 100).toFixed(0)}%</div>
+                        <div className="text-lg font-mono text-high">{spike.pct_change != null ? `${(spike.pct_change * 100).toFixed(0)}%` : 'N/A'}</div>
                       </div>
                       <div className="text-right">
                         <div className="text-[10px] uppercase text-muted">Recent Cases</div>
