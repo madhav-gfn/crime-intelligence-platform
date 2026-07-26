@@ -55,7 +55,7 @@ export default function ChatPage() {
 
   const exampleQueries = [
     "Who is ACC-002543?",
-    "Forecast for Mysuru",
+    "Forecast for Mysore",
     "Show hotspots",
     "Who is connected to ACC-002543?"
   ];

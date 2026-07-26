@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Lock, Shield, Server, RefreshCw } from 'lucide-react';
+import { Lock, Shield, RefreshCw } from 'lucide-react';
 import PageHeader from '../components/ui/PageHeader';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import ErrorState from '../components/ui/ErrorState';
@@ -10,7 +10,7 @@ import { useAuthStore, ROLE_RANK } from '../store/authStore';
 
 export default function AdminPage() {
   const { role } = useAuthStore();
-  const isAdmin = role && ROLE_RANK[role] >= ROLE_RANK['ADMIN'];
+  const isAdmin = !!role && ROLE_RANK[role] >= ROLE_RANK['ADMIN'];
   const [limit, setLimit] = useState(100);
 
   const { data: auditLog, isLoading, error, refetch, isRefetching } = useQuery({

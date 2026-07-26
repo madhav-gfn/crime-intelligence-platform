@@ -10,7 +10,7 @@ import { useAuthStore, ROLE_RANK } from '../store/authStore';
 
 export default function DecisionSupportPage() {
   const { role } = useAuthStore();
-  const isInvestigator = role && ROLE_RANK[role] >= ROLE_RANK['INVESTIGATOR'];
+  const isInvestigator = !!role && ROLE_RANK[role] >= ROLE_RANK['INVESTIGATOR'];
   const [activeTab, setActiveTab] = useState<'PRIORITY' | 'DOSSIER' | 'DISTRICT'>('PRIORITY');
   
   const [searchPersonId, setSearchPersonId] = useState('');

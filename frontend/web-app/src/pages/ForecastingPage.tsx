@@ -8,8 +8,11 @@ import ErrorState from '../components/ui/ErrorState';
 import { forecastingApi } from '../api/forecasting';
 
 export default function ForecastingPage() {
-  const [searchDistrict, setSearchDistrict] = useState('Bengaluru Urban');
-  const [queryDistrict, setQueryDistrict] = useState('Bengaluru Urban');
+  // "BANGALORE COMMR." is the real district name in the NCRB forecast
+  // dataset (old commissionerate naming, not the modern city name) -
+  // verified against the live service rather than guessed.
+  const [searchDistrict, setSearchDistrict] = useState('BANGALORE COMMR.');
+  const [queryDistrict, setQueryDistrict] = useState('BANGALORE COMMR.');
 
   const { data: forecast, isLoading, error } = useQuery({
     queryKey: ['forecast', queryDistrict],
