@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from app.analytics_store import store
 from app.routers.patterns import router as patterns_router
@@ -26,13 +25,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET"],
-    allow_headers=["*"],
-)
-
+# No app-level CORSMiddleware - Zoho Catalyst AppSail's edge intercepts the
+# CORS preflight (OPTIONS) before it ever reaches this app, and injects its
+# own Access-Control-Allow-Origin header on real responses too, based on the
+# per-service "Authorized Domains" allowlist configured in the Catalyst
+# Console (Cloud Scale -> Authentication). Adding our own CORSMiddleware on
+# top produced two Access-Control-Allow-Origin headers on the same response
+# (ours and Catalyst's), which browsers reject outright - see
+# docs/PROJECT_STATUS.md for the debugging trail. CORS is Catalyst's
+# responsibility now, not this app's.
 app.include_router(patterns_router)
 
 
