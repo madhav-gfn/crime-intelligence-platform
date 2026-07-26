@@ -12,5 +12,11 @@
       "backend/services/explainable-ai",
       "backend/services/conversational-interface"
     ]
-  }
+  },
+  "slate": [
+    {
+      "name": "crime-intel-frontend",
+      "source": "E:\\Projects\\crime-intelligence-platform\\frontend\\web-app"
+    }
+  ]
 }

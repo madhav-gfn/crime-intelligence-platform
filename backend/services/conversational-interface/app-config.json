@@ -6,12 +6,12 @@
   "env_variables": {
     "PYTHONPATH": "./vendor",
     "DATA_SEED_DIR": "./data/seed",
-    "NETWORK_ANALYSIS_URL": "REPLACE_ME_after_deploying_network-analysis",
-    "PATTERN_ANALYTICS_URL": "REPLACE_ME_after_deploying_pattern-analytics",
-    "FINANCIAL_CRIME_ANALYSIS_URL": "REPLACE_ME_after_deploying_financial-crime-analysis",
-    "CRIME_FORECASTING_URL": "REPLACE_ME_after_deploying_crime-forecasting",
-    "OFFENDER_PROFILING_URL": "REPLACE_ME_after_deploying_offender-profiling",
-    "INVESTIGATOR_DECISION_SUPPORT_URL": "REPLACE_ME_after_deploying_investigator-decision-support",
-    "EXPLAINABLE_AI_URL": "REPLACE_ME_after_deploying_explainable-ai"
+    "NETWORK_ANALYSIS_URL": "https://network-analysis-50042931907.development.catalystappsail.in",
+    "PATTERN_ANALYTICS_URL": "https://pattern-analytics-50042931907.development.catalystappsail.in",
+    "FINANCIAL_CRIME_ANALYSIS_URL": "https://financial-crime-analysis-50042970888.development.catalystappsail.in",
+    "CRIME_FORECASTING_URL": "https://crime-forecasting-50042931907.development.catalystappsail.in",
+    "OFFENDER_PROFILING_URL": "https://offender-profiling-50042970888.development.catalystappsail.in",
+    "INVESTIGATOR_DECISION_SUPPORT_URL": "https://investigator-decision-support-50042970888.development.catalystappsail.in",
+    "EXPLAINABLE_AI_URL": "https://explainable-ai-50042970888.development.catalystappsail.in"
   }
 }

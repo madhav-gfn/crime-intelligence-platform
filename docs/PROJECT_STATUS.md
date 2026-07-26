@@ -33,22 +33,27 @@ independently), `routers/`, and `tests/`.
 
 | # | Pillar | Service dir | Port | Data | Tests | Deployed? |
 |---|---|---|---|---|---|---|
-| 1 | Conversational interface | `conversational-interface` | 8022 | seed (district names only) | 12 | not yet |
-| 2 | Criminal network & relationship analysis | `network-analysis` | 8010 | synthetic seed | 13 | not yet |
-| 3 | Crime pattern & trend analytics | `pattern-analytics` | 8011 | synthetic seed | 13 | not yet |
-| 4 | Sociological crime insights | `sociological-insights` | 8012 | real 2011 Census + NCRB-calibrated | 14 | not yet |
-| 5 | Offender profiling (recidivism) | `offender-profiling` | 8016 | synthetic seed, trained classifier | 16 | not yet |
-| 6 | Investigator decision support | `investigator-decision-support` | 8018 | synthesis of pillars 2/3/4/5/8 | 13 | not yet |
-| 7 | Financial crime / AML | `financial-crime-analysis` | 8013 | real IBM AML benchmark (5.08M txns) | 13 | not yet |
-| 8 | Crime forecasting | `crime-forecasting` | 8014 | real NCRB district-wise IPC data | 10 | not yet |
-| 9 | Explainable AI (SHAP) | `explainable-ai` | 8021 | derived from pillar 5's model | 9 | not yet |
+| 1 | Conversational interface | `conversational-interface` | 8022 | seed (district names only) | 12 | live, needs 7 downstream URLs redeployed |
+| 2 | Criminal network & relationship analysis | `network-analysis` | 8010 | synthetic seed | 13 | **live** |
+| 3 | Crime pattern & trend analytics | `pattern-analytics` | 8011 | synthetic seed | 13 | **live** |
+| 4 | Sociological crime insights | `sociological-insights` | 8012 | real 2011 Census + NCRB-calibrated | 14 | **live** |
+| 5 | Offender profiling (recidivism) | `offender-profiling` | 8016 | synthetic seed, trained classifier | 16 | **live** |
+| 6 | Investigator decision support | `investigator-decision-support` | 8018 | synthesis of pillars 2/3/4/5/8 | 13 | **live** |
+| 7 | Financial crime / AML | `financial-crime-analysis` | 8013 | real IBM AML benchmark (5.08M txns) | 13 | **live** |
+| 8 | Crime forecasting | `crime-forecasting` | 8014 | real NCRB district-wise IPC data | 10 | **live** |
+| 9 | Explainable AI (SHAP) | `explainable-ai` | 8021 | derived from pillar 5's model | 9 | **live** |
 | 10 | Auth / RBAC / governance | `auth-service` | 8020 | demo users (bcrypt-hashed) | 9 | **live** |
 
-**122 tests total**, all passing as of the last full run. auth-service is
-confirmed live on Zoho Catalyst AppSail (`/health` returns 200). The other
-9 are fully built, tested locally, vendored for Linux, zipped, and staged
-in `scripts/deploy/*.zip` — ready to deploy via the Catalyst console but
-**not yet uploaded**.
+**122 tests total**, all passing as of the last full run. **All 10
+services are live on Zoho Catalyst AppSail**, verified via `/health`
+returning real loaded-record counts (not just a bare 200) for each one —
+see the deployed URLs in `frontend/web-app/.env.local`. The one
+outstanding step: `conversational-interface`'s 7 downstream `*_URL` env
+vars were updated from `REPLACE_ME_...` placeholders to the real deployed
+URLs (both in its `app-config.json` and, more importantly, in the actual
+Catalyst Console — Console-deployed services ignore the zip's
+`app-config.json`), but it needs a **redeploy** for that change to take
+effect; not yet confirmed done as of this writing.
 
 ### What each pillar actually does
 
@@ -168,7 +173,7 @@ Confirmed via file counts, not assumptions:
 | `docs/deployment/` | **Real** — `DEPLOY.md`, written and validated against a live deploy |
 | `database/migrations/*.sql` | Real files (2), but **unused** — no service connects to a relational DB |
 | `data/processed/fir_system_oltp.sqlite` | Exists (3.8 MB) but **unused** — no service imports `sqlite3` |
-| `frontend/web-app/` | **Empty scaffold** (0 files) — no UI exists |
+| `frontend/web-app/` | **Real** — React 19 + TypeScript + Vite, all 11 pages/API clients/auth store built, builds clean (`npm run build`). Corrects this doc's earlier claim, which was based on an incomplete (`-maxdepth 2`) directory scan. Not yet deployed anywhere. |
 | `infra/{docker,kubernetes,terraform}` | **Empty scaffold** (0 files) |
 | `ml-pipeline/`, `nlp-models/` | **Empty scaffold** (0 files) — superseded by the actual per-service `scripts/data_generation/<pillar>/` pattern |
 | top-level `tests/{e2e,integration,unit}` | **Empty scaffold** (0 files) — no cross-service integration tests exist; only per-service unit tests and manual smoke tests |
@@ -184,11 +189,15 @@ Worth a decision: delete them, or treat them as a real backlog
 Full detail in [`docs/deployment/DEPLOY.md`](deployment/DEPLOY.md) — this
 is the condensed version.
 
-**Live**: `auth-service`, confirmed via `/health`.
-**Ready, not yet uploaded**: the other 9, as zips in `scripts/deploy/`.
+**All 10 services are live**, each verified individually via `/health`
+returning real loaded-record counts, not just a bare 200 (e.g.
+financial-crime-analysis: 515,080 accounts loaded; pattern-analytics:
+5,000 FIRs loaded). Deployed URLs are in
+`frontend/web-app/.env.local` (gitignored - not in this doc to avoid two
+sources of truth going stale independently).
 
-Getting `auth-service` live surfaced three real bugs, all now fixed and
-applied to all 10 services (not just auth-service):
+Getting the first service (`auth-service`) live surfaced three real bugs,
+all fixed and applied to all 10 services before the rest were deployed:
 
 1. **Catalyst's Managed Runtime does not run `pip install`.** Every
    service's dependencies must be pre-installed ("vendored") into a
@@ -227,16 +236,28 @@ for real if the CLI path ever starts working.
 
 ### What's left to actually finish the deployment
 
-1. Upload the remaining 9 zips via Console → Deploy from Console, same
-   steps as auth-service (documented per-service in `DEPLOY.md` step 3).
-2. Set `JWT_SECRET` (one shared random value) + `JWT_ALGORITHM=HS256` on
-   all 10 services via Console env vars.
-3. Deploy `conversational-interface` **last** — its env vars need the
-   other 7 services' real deployed URLs, currently placeholder
-   `REPLACE_ME_after_deploying_*` strings in its `app-config.json`.
+1. ~~Upload the remaining 9 zips~~ — done, all 10 confirmed live via
+   `/health`.
+2. ~~Set `JWT_SECRET` + `JWT_ALGORITHM` on all 10 services~~ — done.
+3. **`conversational-interface`'s 7 downstream `*_URL` env vars were
+   updated** (in both its `app-config.json` and, more importantly, the
+   actual Catalyst Console) **but the redeploy to apply them hasn't been
+   confirmed yet.** Until that redeploy happens, every chat intent except
+   `help` will still fail with "isn't reachable right now."
 4. Re-run the verification curl sequence in `DEPLOY.md` step 7 end-to-end
    (login → call an ANALYST endpoint → confirm a 403 on an
-   INVESTIGATOR-gated one).
+   INVESTIGATOR-gated one) — done for auth-service's own login; not yet
+   done as a full chat-message round trip through conversational-interface
+   to a downstream service.
+5. Demo credentials are now fixed (not random) — see
+   `scripts/data_generation/auth/build_demo_users.py`; the six accounts and
+   passwords are documented there and in this session's chat history, not
+   duplicated here to avoid a third copy going stale.
+6. Frontend (`frontend/web-app/`) is fully built (all pages, API clients,
+   auth store — contrary to this doc's earlier claim that it was empty
+   scaffolding; that was based on an incomplete directory scan) and builds
+   cleanly with `npm run build`. Not yet deployed anywhere — currently only
+   runnable via `npm run dev` locally against the live backend.
 
 ## 7. Git / version control state
 
@@ -281,26 +302,43 @@ owns the repo.
 - **No CI/CD**: every deploy so far is a manual Console upload. Nothing
   auto-deploys on push.
 - **No cross-service integration tests**: the only proof all 10 services
-  work together is the manual smoke tests run by hand during this build
-  and the one live auth-service health check. `tests/` at the repo root
-  (e2e/integration) is empty scaffolding.
-- **No frontend**: all 10 services are API-only. Swagger UI (`/docs`) is
-  the only interactive surface until a UI is built.
-- **`explainable-ai`'s deploy zip is ~140 MB** (shap + scipy + scikit-learn
-  + numba/llvmlite, all vendored as Linux wheels). Untested against any
-  Catalyst upload-size limit — auth-service's 8 MB zip is the only one
-  proven to upload successfully so far.
+  work together is the manual smoke tests run by hand during this build.
+  `tests/` at the repo root (e2e/integration) is empty scaffolding.
+- **Frontend deployed via Zoho Catalyst Slate**:
+  https://crime-intel-frontend-cgujvxbi.onslate.in — `catalyst slate:link
+  --source ./frontend/web-app` then `catalyst deploy slate
+  crime-intel-frontend` from the repo root. Hit one real bug on the way:
+  `package.json` had `@rolldown/binding-win32-x64-msvc` pinned as a plain
+  `devDependency` (should resolve per-platform automatically, like esbuild
+  does) - broke the build on Slate's Linux runner with `EBADPLATFORM`.
+  Removed it, regenerated `package-lock.json`, confirmed the Windows build
+  still worked locally, then redeployed successfully. Also worth knowing:
+  `catalyst deploy slate` packages your **local working directory**
+  directly (including gitignored `.env.local`), not a git clone - unlike
+  a separate GitHub-integration-based Slate deploy attempted first in the
+  console, which cloned from `origin/main` and silently skipped
+  install/build/output because no build config was set there. That
+  GitHub-integration Slate app is still sitting in the console, broken and
+  unused - worth deleting to avoid confusion between the two.
+- **`explainable-ai`'s deploy zip was ~140 MB** (shap + scipy +
+  scikit-learn + numba/llvmlite, all vendored as Linux wheels) and
+  uploaded successfully — no longer a real risk, but the largest zip by
+  far if it ever needs rebuilding.
 
 ## 9. Suggested next steps (not started, for the user to prioritize)
 
 In roughly the order they'd naturally come up:
 
-1. Finish the deployment: upload the remaining 9 zips (see §6).
-2. Decide the fate of the empty scaffold directories (§5) — delete, or
+1. Confirm `conversational-interface`'s redeploy actually picked up the 7
+   real downstream URLs — test a real chat message end-to-end, not just
+   `/health`.
+2. ~~Deploy the frontend~~ — done:
+   https://crime-intel-frontend-cgujvxbi.onslate.in (unlike AppSail,
+   Slate's CLI link/deploy commands worked without hitting the
+   `appsailConfig.map` bug). Delete the unused, broken GitHub-integration
+   Slate app left over from the first attempt (see §6).
+3. Decide the fate of the empty scaffold directories (§5) — delete, or
    turn into real backlog items.
-3. If a UI is wanted, `frontend/web-app/` is the obvious next real body of
-   work — currently the single biggest gap between "10 working APIs" and
-   "a product."
 4. Decide whether `scripts/deploy/*.zip` belong in git history (§7).
 5. If sharing this publicly or handing it to others, replace every
    service's dev-default `JWT_SECRET` posture with something that refuses
