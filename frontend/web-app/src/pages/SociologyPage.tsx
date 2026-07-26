@@ -51,7 +51,8 @@ export default function SociologyPage() {
               <select className="select input" value={sortBy} onChange={e => setSortBy(e.target.value)}>
                 <option value="literacy_rate">Literacy Rate</option>
                 <option value="urbanization_rate">Urbanization Rate</option>
-                <option value="unemployment_rate">Unemployment Rate</option>
+                <option value="workforce_participation_rate">Workforce Participation Rate</option>
+                <option value="higher_education_rate">Higher Education Rate</option>
                 <option value="crime_rate_per_100k">Crime Rate (per 100k)</option>
               </select>
             </div>
@@ -106,8 +107,9 @@ export default function SociologyPage() {
               <select className="select input" value={scatterIndicator} onChange={e => setScatterIndicator(e.target.value)}>
                 <option value="literacy_rate">Literacy Rate</option>
                 <option value="urbanization_rate">Urbanization Rate</option>
-                <option value="unemployment_rate">Unemployment Rate</option>
-                <option value="sex_ratio">Sex Ratio</option>
+                <option value="workforce_participation_rate">Workforce Participation Rate</option>
+                <option value="higher_education_rate">Higher Education Rate</option>
+                <option value="amenity_index">Amenity Index</option>
               </select>
             </div>
 
