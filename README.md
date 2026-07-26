@@ -10,6 +10,41 @@ This platform bridges the gap between raw law enforcement data (FIRs, suspect pr
 
 The system is designed around a microservices architecture. Each service is fully independent, with its own dependencies, models, and RBAC (Role-Based Access Control) verification logic. 
 
+```mermaid
+graph TD
+    Client[React/Vite Command Center]
+    
+    subgraph Backend Microservices
+        Auth[Auth Service :8020]
+        NLU[Conversational Interface :8022]
+        Decision[Decision Support :8018]
+        Net[Network Analysis :8010]
+        Pat[Pattern Analytics :8011]
+        Soc[Sociological Insights :8012]
+        Prof[Offender Profiling :8016]
+        Fin[Financial Crime :8013]
+        Fore[Crime Forecasting :8014]
+        XAI[Explainable AI :8021]
+    end
+
+    Client -->|JWT Authentication| Auth
+    Client -->|NLU Queries| NLU
+    Client -->|Fetch Dossiers| Decision
+    Client -->|View Networks| Net
+    Client -->|View Patterns| Pat
+    
+    %% Internal flow
+    Decision -.->|Reads Precomputed Data| Net
+    Decision -.->|Reads Precomputed Data| Pat
+    Decision -.->|Reads Precomputed Data| Prof
+    Decision -.->|Reads Precomputed Data| Fore
+    
+    NLU -.->|API Proxy| Decision
+    NLU -.->|API Proxy| Net
+    
+    XAI -.->|Explains Models| Prof
+```
+
 ### The 10 Intelligence Pillars (Backend)
 1. **Conversational Interface** (`:8022`): NLU routing layer that translates plain English queries into backend API calls.
 2. **Network Analysis** (`:8010`): Co-accused graphs, organized group detection, and shortest-path analysis between suspects.
@@ -55,6 +90,15 @@ Open a PowerShell terminal as Administrator at the project root and run:
 
 ## 🔒 Role-Based Access Control (RBAC)
 The platform enforces strict data privacy rules statelessly across all microservices via JWTs.
+
+```mermaid
+flowchart LR
+    A[ANALYST] -->|Can view| B(Aggregate / Statistical Data)
+    C[INVESTIGATOR] -->|Inherits Analyst| A
+    C -->|Can view| D(PII, Persons, Specific Accounts)
+    E[ADMIN] -->|Inherits Investigator| C
+    E -->|Can view| F(System Audit Logs)
+```
 
 | Role | Access Level |
 |------|-------------|
